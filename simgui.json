@@ -1,0 +1,158 @@
+{
+  "HALProvider": {
+    "Other Devices": {
+      "navX-Sensor[0]": {
+        "header": {
+          "open": true
+        }
+      }
+    }
+  },
+  "NTProvider": {
+    "types": {
+      "/FMSInfo": "FMSInfo",
+      "/Shuffleboard/RobotContainer/autoSelector": "String Chooser",
+      "/Shuffleboard/RobotContainer/drivebaseS": "Subsystem",
+      "/Shuffleboard/RobotContainer/field": "Field2d",
+      "/SmartDashboard/PIDController[9]": "PIDController"
+    },
+    "windows": {
+      "/Shuffleboard/RobotContainer/field": {
+        "backLeft": {
+          "length": 0.4000000059604645,
+          "width": 0.4000000059604645
+        },
+        "backRight": {
+          "length": 0.4000000059604645,
+          "width": 0.4000000059604645
+        },
+        "bottom": 903,
+        "frontLeft": {
+          "length": 0.4000000059604645,
+          "width": 0.4000000059604645
+        },
+        "frontRight": {
+          "length": 0.4000000059604645,
+          "width": 0.4000000059604645
+        },
+        "height": 8.229599952697754,
+        "image": "C:\\Users\\jashu\\PathWeaver\\Games\\2022 Rapid React\\2022-field.png",
+        "left": 74,
+        "path": {
+          "arrows": false,
+          "style": "Line"
+        },
+        "pathOTF": {
+          "arrows": false,
+          "style": "Line"
+        },
+        "right": 1781,
+        "simPose": {
+          "color": [
+            0.2559240758419037,
+            0.26753461360931396,
+            0.48523205518722534,
+            255.0
+          ]
+        },
+        "target": {
+          "color": [
+            0.2591884434223175,
+            0.8227847814559937,
+            0.22912994027137756,
+            255.0
+          ],
+          "length": 1.5,
+          "style": "Box/Image",
+          "width": 1.5
+        },
+        "top": 45,
+        "width": 16.459199905395508,
+        "window": {
+          "visible": true
+        }
+      }
+    }
+  },
+  "NetworkTables": {
+    "transitory": {
+      "Shuffleboard": {
+        ".recording": {
+          "open": true
+        },
+        "DrivebaseS": {
+          "SwerveModule-RL-[16,15]": {
+            "open": true
+          },
+          "open": true,
+          "thetaController": {
+            "open": true
+          }
+        },
+        "RobotContainer": {
+          "field": {
+            "open": true
+          }
+        },
+        "open": true
+      },
+      "SmartDashboard": {
+        "PIDController[9]": {
+          "open": true
+        },
+        "open": true,
+        "thetaPIDController": {
+          "open": true
+        }
+      }
+    }
+  },
+  "Plot": {
+    "Plot <0>": {
+      "plots": [
+        {
+          "height": 314,
+          "series": [
+            {
+              "color": [
+                0.2980392277240753,
+                0.44705885648727417,
+                0.6901960968971252,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/DrivebaseS/getPoseHeading"
+            },
+            {
+              "color": [
+                0.8666667342185974,
+                0.5176470875740051,
+                0.32156863808631897,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/DrivebaseS/getHeading"
+            }
+          ]
+        },
+        {
+          "axis": [
+            {
+              "autoFit": true
+            }
+          ],
+          "height": 314,
+          "series": [
+            {
+              "color": [
+                0.3333333432674408,
+                0.658823549747467,
+                0.4078431725502014,
+                1.0
+              ],
+              "id": "navX-Sensor[0]-Yaw"
+            }
+          ]
+        }
+      ]
+    }
+  }
+}
