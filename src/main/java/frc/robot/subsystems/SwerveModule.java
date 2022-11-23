@@ -1,25 +1,21 @@
 package frc.robot.subsystems;
 
 import com.revrobotics.CANSparkMax;
-import com.revrobotics.CANSparkMax.ControlType;
 import com.revrobotics.CANSparkMax.IdleMode;
 import com.revrobotics.CANSparkMaxLowLevel.MotorType;
-import com.revrobotics.RelativeEncoder;
-import com.revrobotics.SparkMaxPIDController;
 
-import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
-import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.DriveConstants.ModuleConstants;
 import frc.robot.util.sim.DutyCycleEncoderSim;
-import frc.robot.util.sim.SimEncoder;
 import frc.robot.util.sim.SparkMaxEncoderWrapper;
 import io.github.oblarg.oblog.Loggable;
-import io.github.oblarg.oblog.ShuffleboardContainerWrapper;
 import io.github.oblarg.oblog.annotations.Log;
 
 public class SwerveModule extends SubsystemBase implements Loggable{
@@ -32,7 +28,7 @@ public class SwerveModule extends SubsystemBase implements Loggable{
 
     private SwerveModuleState desiredState = new SwerveModuleState();
 
-    private static final double rotationkP = 5.5;//0.2 * 2.0 * Math.PI * DriveConstants.AZMTH_REVS_PER_ENC_REV;
+    private static final double rotationkP = 5.5;
     private static final double rotationkD = 0.05;
 
     private static final double drivekP = 1;
@@ -40,6 +36,8 @@ public class SwerveModule extends SubsystemBase implements Loggable{
     private final CANSparkMax driveMotor;
     private final CANSparkMax rotationMotor;
 
+    // These wrappers handle sim value holding, as well as circumventing the Spark MAX velocity signal delay
+    // by integrating position. Credit for the latter to 6328. 
     private final SparkMaxEncoderWrapper driveEncoderWrapper;
     private final SparkMaxEncoderWrapper rotationEncoderWrapper;
 
@@ -51,22 +49,16 @@ public class SwerveModule extends SubsystemBase implements Loggable{
 
     //absolute offset for the CANCoder so that the wheels can be aligned when the robot is turned on
 
-    private final PIDController rotationPIDController;
+    private final ProfiledPIDController rotationPIDController;
     // logging position error because it's actually the "process variable", vs its derivative
     @Log(methodName="getPositionError", name="speedError")
     private final PIDController drivePIDController;
     private final String loggingName;
 
 
-    public SwerveModule(
-        int driveMotorId, 
-        int rotationMotorId,
-        int magEncoderId,
-        double measuredOffsetRadians,
-        String name
-    ) {
-        driveMotor = new CANSparkMax(driveMotorId, MotorType.kBrushless);
-        rotationMotor = new CANSparkMax(rotationMotorId, MotorType.kBrushless);
+    public SwerveModule( ModuleConstants moduleConstants) {
+        driveMotor = new CANSparkMax(moduleConstants.driveMotorID, MotorType.kBrushless);
+        rotationMotor = new CANSparkMax(moduleConstants.rotationMotorID, MotorType.kBrushless);
         driveMotor.restoreFactoryDefaults(false);
         rotationMotor.restoreFactoryDefaults(false);
 
@@ -97,10 +89,10 @@ public class SwerveModule extends SubsystemBase implements Loggable{
         driveEncoderWrapper = new SparkMaxEncoderWrapper(driveMotor);
         rotationEncoderWrapper = new SparkMaxEncoderWrapper(rotationMotor);
         //Config the mag encoder, which is directly on the module rotation shaft.
-        magEncoder = new DutyCycleEncoder(magEncoderId);
+        magEncoder = new DutyCycleEncoder(moduleConstants.magEncoderID);
         //magEncoder.setDistancePerRotation(2*Math.PI);
         magEncoder.setDutyCycleRange(1.0/4098.0, 4096.0/4098.0); //min and max pulse width from the mag encoder datasheet
-        magEncoderOffset = measuredOffsetRadians;
+        magEncoderOffset = moduleConstants.magEncoderOffset;
         //magEncoder.setPositionOffset(measuredOffsetRadians/(2*Math.PI));
         // The magnet in the module is not aligned straight down the direction the wheel points, but it is fixed in place.
         // This means we can subtract a fixed position offset from the encoder reading,
@@ -108,8 +100,9 @@ public class SwerveModule extends SubsystemBase implements Loggable{
         //magEncoder.setPositionOffset(measuredOffsetRadians/(2*Math.PI));
         
         //Allows us to set what the mag encoder reads in sim.
+        // Start with what it would read if the module is forward.
         magEncoderSim = new DutyCycleEncoderSim(magEncoder);
-        magEncoderSim.setAbsolutePosition(measuredOffsetRadians/ (2*Math.PI));
+        magEncoderSim.setAbsolutePosition(magEncoderOffset/ (2*Math.PI));
 
         //Drive motors should brake, rotation motors should coast (to allow module realignment)
         driveMotor.setIdleMode(IdleMode.kBrake);
@@ -122,7 +115,8 @@ public class SwerveModule extends SubsystemBase implements Loggable{
         // Theoretically, if the error is increasing (aka, the setpoint is getting away),
         // we should match the velocity of the setpoint with our D term to stabilize the error,
         // then add the additional output proportional to the size of the error.
-        rotationPIDController = new PIDController(rotationkP, 0, rotationkD);
+        // Trapezoid Profile Constraints: 7.8 rot/s (limit of the NEO), 40 rot/s^2
+        rotationPIDController = new ProfiledPIDController(rotationkP, 0.0, rotationkD, new TrapezoidProfile.Constraints(7.8*2 *Math.PI, 400*2*Math.PI));
         // Tell the PID controller that it can move across the -pi to pi rollover point.
         rotationPIDController.enableContinuousInput(-Math.PI, Math.PI);
 
@@ -130,7 +124,8 @@ public class SwerveModule extends SubsystemBase implements Loggable{
         // (and feedforward, which is handled in #setDesiredStateClosedLoop)
         drivePIDController = new PIDController(drivekP, 0, 0.1);
         // Give this module a unique name on the dashboard so we have four separate sub-tabs.
-        loggingName = "SwerveModule-" + name + "-[" + driveMotor.getDeviceId() + ',' + rotationMotor.getDeviceId() + ']';
+        loggingName = "SwerveModule-" + moduleConstants.name + "-[" + driveMotor.getDeviceId() + ',' + rotationMotor.getDeviceId() + ']';
+        resetDistance();
     }
 
     /**
@@ -272,7 +267,7 @@ public class SwerveModule extends SubsystemBase implements Loggable{
 
     @Log
     public double getRotationSetpoint() {
-        return rotationPIDController.getSetpoint();
+        return rotationPIDController.getSetpoint().position;
     }
 
     @Log

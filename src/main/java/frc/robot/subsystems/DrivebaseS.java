@@ -14,7 +14,6 @@ import static frc.robot.Constants.DriveConstants.WHEEL_ENC_COUNTS_PER_WHEEL_REV;
 import static frc.robot.Constants.DriveConstants.WHEEL_RADIUS_M;
 import static frc.robot.Constants.DriveConstants.WHEEL_REVS_PER_ENC_REV;
 import static frc.robot.Constants.DriveConstants.m_kinematics;
-import static frc.robot.Constants.DriveConstants.robotToModuleTL;
 
 import java.util.List;
 import java.util.function.Supplier;
@@ -24,39 +23,28 @@ import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.PathPoint;
-import frc.robot.util.trajectory.PPHolonomicDriveController;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.geometry.Twist2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
-import edu.wpi.first.math.trajectory.Trajectory;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
-import edu.wpi.first.util.sendable.SendableRegistry;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.SPI.Port;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
-import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
-import edu.wpi.first.wpilibj2.command.InstantCommand;
-import edu.wpi.first.wpilibj2.command.ParallelDeadlineGroup;
-import edu.wpi.first.wpilibj2.command.RepeatCommand;
-import edu.wpi.first.wpilibj2.command.StartEndCommand;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
-import edu.wpi.first.wpilibj2.command.WaitCommand;
 import frc.robot.Robot;
-import frc.robot.Constants.CANDevices;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.DriveConstants.ModuleConstants;
 import frc.robot.util.NomadMathUtil;
 import frc.robot.util.sim.SimGyroSensorModel;
 import frc.robot.util.sim.wpiClasses.QuadSwerveSim;
@@ -73,66 +61,6 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
      * Handles all the odometry and base movement for the chassis
      */
 
-    /**
-     * absolute encoder offsets for the wheels
-     * 180 degrees added to offset values to invert one side of the robot so that it doesn't spin in place
-     */
-    private static final double frontLeftAngleOffset =5.708331;
-    private static final double frontRightAngleOffset = 3.783; //11,12
-    private static final double rearLeftAngleOffset = 1.787997;
-    private static final double rearRightAngleOffset = 5.66;
-
-    /**
-     * SwerveModule objects
-     * Parameters:
-     * drive motor can ID
-     * rotation motor can ID
-     * external CANCoder can ID
-     * measured CANCoder offset
-     */
-
-    private final SwerveModule frontLeft = 
-        DrivebaseS.swerveModuleFactory(
-            CANDevices.frontLeftDriveMotorId,
-            CANDevices.frontLeftRotationMotorId,
-            CANDevices.frontLeftRotationEncoderId,
-            frontLeftAngleOffset,
-            "FL"
-        );
-
-    private final SwerveModule frontRight = 
-        DrivebaseS.swerveModuleFactory(
-            CANDevices.frontRightDriveMotorId,
-            CANDevices.frontRightRotationMotorId,
-            CANDevices.frontRightRotationEncoderId,
-            frontRightAngleOffset,
-            "FR"
-        );
-
-    private final SwerveModule rearLeft = 
-        DrivebaseS.swerveModuleFactory(
-            CANDevices.rearLeftDriveMotorId,
-            CANDevices.rearLeftRotationMotorId,
-            CANDevices.rearLeftRotationEncoderId,
-            rearLeftAngleOffset,
-            "RL"
-        );
-
-    private final SwerveModule rearRight = 
-        DrivebaseS.swerveModuleFactory(
-            CANDevices.rearRightDriveMotorId,
-            CANDevices.rearRightRotationMotorId,
-            CANDevices.rearRightRotationEncoderId,
-            rearRightAngleOffset,
-            "RR"
-        );
-
-    // commanded values from the joysticks and field relative value to use in AlignWithTargetVision and AlignWithGyro
-    private double commandedForward = 0;
-    private double commandedStrafe = 0;
-    private double commandedRotation = 0;
-
-    private boolean isCommandedFieldRelative = false;
 
     private final AHRS navx = new AHRS(Port.kMXP);
     private SimGyroSensorModel simNavx = new SimGyroSensorModel();
@@ -140,7 +68,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     public final PIDController xController = new PIDController(3.0, 0, 0);
     public final PIDController yController = new PIDController(3.0, 0, 0);
     @Log
-    public final ProfiledPIDController thetaController = new ProfiledPIDController(3, 0, 0.1, DriveConstants.THETA_DEFAULT_CONSTRAINTS);
+    public final PIDController thetaController = new PIDController(3, 0, 0.1);
     public final PPHolonomicDriveController holonomicDriveController = new PPHolonomicDriveController(xController, yController, thetaController);
 
     /**
@@ -156,34 +84,31 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         DrivebaseS.swerveSimModuleFactory()
     );
 
-    @Log.Exclude
-    private final List<SwerveModule> modules = List.of(
-        frontLeft, frontRight,
-        rearLeft, rearRight
+    private final QuadSwerveSim quadSwerveSim = 
+    new QuadSwerveSim(
+        WHEEL_BASE_WIDTH_M,
+        WHEEL_BASE_WIDTH_M,
+        ROBOT_MASS_kg,
+        ROBOT_MOI_KGM2,
+        moduleSims
     );
 
+    @Log
+    private SwerveModule fl = new SwerveModule(ModuleConstants.FL);
+    @Log
+    private SwerveModule fr = new SwerveModule(ModuleConstants.FR);
+    @Log
+    private SwerveModule bl = new SwerveModule(ModuleConstants.BL);
+    @Log
+    private SwerveModule br = new SwerveModule(ModuleConstants.BR);
+    @Log.Exclude
+    private final List<SwerveModule> modules = List.of(
+        fl, fr, bl, br
+    );
 
-
-    private final QuadSwerveSim quadSwerveSim = 
-        new QuadSwerveSim(
-            WHEEL_BASE_WIDTH_M,
-            WHEEL_BASE_WIDTH_M,
-            ROBOT_MASS_kg,
-            ROBOT_MOI_KGM2,
-            moduleSims
-        );
-
-    
     public DrivebaseS() {
-        SendableRegistry.add(thetaController, "thetaPIDController");
-
         navx.reset();
-
-        // reset the measured distance driven for each module
-        frontLeft.resetDistance();
-        frontRight.resetDistance();
-        rearLeft.resetDistance();
-        rearRight.resetDistance();
+        
         odometry =
         new SwerveDriveOdometry(
             m_kinematics, 
@@ -197,9 +122,6 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     public void periodic() {
         // update the odometry every 20ms
         odometry.update(getHeading(), getModulePositions());
-        SmartDashboard.putNumber("a", 2);
-        SmartDashboard.putData(thetaController);
-
     }
     
     public void drive(ChassisSpeeds speeds) {
@@ -215,37 +137,30 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         } else {
             // make sure the wheels don't try to spin faster than the maximum speed possible
             states = m_kinematics.toSwerveModuleStates(speeds);
-            // NomadMathUtil.normalizeDrive(states, speeds,
-            //     Constants.DriveConstants.MAX_FWD_REV_SPEED_MPS,
-            //     Constants.DriveConstants.MAX_ROTATE_SPEED_RAD_PER_SEC,
-            //     Constants.DriveConstants.MAX_MODULE_SPEED_FPS);
+            NomadMathUtil.normalizeDrive(states, speeds,
+                DriveConstants.MAX_FWD_REV_SPEED_MPS,
+                DriveConstants.MAX_ROTATE_SPEED_RAD_PER_SEC,
+                DriveConstants.MAX_MODULE_SPEED_FPS);
         } 
-
         setModuleStates(states);
-
     }
 
-    public void driveFieldRelative(ChassisSpeeds speeds) {
-        drive(ChassisSpeeds.fromFieldRelativeSpeeds(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond, speeds.omegaRadiansPerSecond, getPoseHeading()));
+    public void driveFieldRelative(ChassisSpeeds fieldRelativeSpeeds) {
+        drive(ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds, getPoseHeading()));
     }
 
     public void driveFieldRelativeHeading(ChassisSpeeds speeds) {
         double omegaRadiansPerSecond = speeds.omegaRadiansPerSecond;
-        double currentTargetRadians = thetaController.getGoal().position;
+        double currentTargetRadians = thetaController.getSetpoint();
         
         double newTargetRadians = currentTargetRadians + (omegaRadiansPerSecond/50);
 
 
         double commandRadiansPerSecond = 
-        thetaController.calculate(getPoseHeading().getRadians(),
-        new TrapezoidProfile.State(newTargetRadians,omegaRadiansPerSecond));
+        thetaController.calculate(getPoseHeading().getRadians(), newTargetRadians);
 
-        speeds.omegaRadiansPerSecond = commandRadiansPerSecond + thetaController.getSetpoint().velocity;
+        speeds.omegaRadiansPerSecond = commandRadiansPerSecond;
         driveFieldRelative(speeds);
-    }
-
-    public void setRotationState(TrapezoidProfile.State state) {
-        thetaController.setGoal(state);
     }
 
 
@@ -257,16 +172,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
      * rotation value
      * if the control is field relative or robot relative
      */
-    public void drive(double forward, double strafe, double rotation, boolean isFieldRelative) {
-
-        // update the drive inputs for use in AlignWithGyro and AlignWithTargetVision control
-        commandedForward = forward;
-        commandedStrafe = strafe;
-        commandedRotation = rotation;
-
-        isCommandedFieldRelative = isFieldRelative;
-
-        
+    public void drive(double forward, double strafe, double rotation, boolean isFieldRelative) {       
 
         /**
          * ChassisSpeeds object to represent the overall state of the robot
@@ -277,7 +183,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         ChassisSpeeds speeds =
             isFieldRelative
                 ? ChassisSpeeds.fromFieldRelativeSpeeds(
-                    forward, strafe, rotation, getPoseHeading().plus(new Rotation2d(rotation * 0.01)))
+                    forward, strafe, rotation, getPoseHeading())
                 : new ChassisSpeeds(forward, strafe, rotation);
         
         drive(speeds);
@@ -286,7 +192,9 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
 
     /**
      * Return the desired states of the modules when the robot is stopped. This can be an x-shape to hold against defense,
-     * or all modules forward. Here we have it stopping all modules but leaving the angles at their current positions
+     * or all modules forward. Here we have it stopping all modules but leaving the angles at their current positions.
+     * 
+     * 
      * @return
      */
     private SwerveModuleState[] getStoppedStates() {
@@ -308,9 +216,12 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
             modules.get(i).setDesiredStateClosedLoop(moduleStates[i]);
         }
     }
-    // returns an array of SwerveModuleStates. 
-    // Front(left, right), Rear(left, right)
-    // This order is important to remain consistent across the codebase, or commands can get swapped around.
+
+    /*
+     *  returns an array of SwerveModuleStates. 
+     *  Front(left, right), Rear(left, right)
+     *  This order is important to remain consistent across the codebase, or commands can get swapped around.
+     */
     public SwerveModuleState[] getModuleStates() {
         SwerveModuleState[] states = new SwerveModuleState[4];
         for (int i = 0; i < NUM_MODULES; i++) {
@@ -321,6 +232,10 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         return states;
     }
 
+    /**
+     * Return the module positions for odometry.
+     * @return an array of 4 SwerveModulePosition objects
+     */
     public SwerveModulePosition[] getModulePositions() {
         SwerveModulePosition[] states = new SwerveModulePosition[4];
         for (int i = 0; i < NUM_MODULES; i++) {
@@ -336,23 +251,30 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
      * Based on drive encoder and gyro reading
      */
     public Pose2d getPose() {
-        if(RobotBase.isSimulation() && false) {
+        return odometry.getPoseMeters();
+    }
+
+    /**
+     * Return the simulated estimate of the robot's pose.
+     * NOTE: on a real robot this will return a new Pose2d, (0, 0, 0)
+     * @return
+     */
+    public Pose2d getSimPose() {
+        if(RobotBase.isSimulation()) {
             return quadSwerveSim.getCurPose();
         }
         else {
-            return odometry.getPoseMeters();
+            return new Pose2d();
         }
     }
 
-    // reset the current pose to a desired pose
+    /**
+     * Reset the pose of odometry and sim to the given pose.
+     * @param pose The Pose2d to reset to.
+     */
     public void resetPose(Pose2d pose) {
         quadSwerveSim.modelReset(pose);
         odometry.resetPosition(pose, getHeading(), getModulePositions() );
-        resetThetaProfile(getPoseHeading());
-    }
-
-    public void resetThetaProfile(Rotation2d poseHeading) {
-        thetaController.reset(poseHeading.getRadians());
     }
 
     // reset the measured distance driven for each module
@@ -360,69 +282,54 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         modules.forEach((module)->module.resetDistance());
     }
 
-    // return the average distance driven for each module to get an overall distance driven by the robot
-    public double getAverageDriveDistanceRadians() {
-        double total = 0;
-        for (int i = 0; i < NUM_MODULES; i++) {
-            total += modules.get(i).getDriveDistanceMeters();
-        }
-        return total / 4.0;
 
-    }
-
-    // return the average velocity for each module to get an overall velocity for the robot
-    public double getAverageDriveVelocityRadiansPerSecond() {
-        double total = 0;
-        for (int i = 0; i < NUM_MODULES; i++) {
-            total += modules.get(i).getCurrentVelocityMetersPerSecond();
-        }
-        return total / 4.0;
-    }
-    // get the current heading of the robot based on the gyro
+    /**
+     * @return the current navX heading (which will not match odometry after drift or reset)
+     */
     @Log(methodName = "getRadians")
     public Rotation2d getHeading() {
-        if (RobotBase.isSimulation()) {
+        if(RobotBase.isSimulation()) {
             return simNavx.getRotation2d();
         }
         return navx.getRotation2d();
     }
 
     @Log(methodName = "getRadians")
-    // Gets the current heading based on odometry. (this value will reflect odometry resets)
+    /**
+     * Gets the current heading based on odometry. (this value will reflect odometry resets)
+     * @return the current odometry heading.
+     */
     public Rotation2d getPoseHeading() {
         return getPose().getRotation();
     }
-
-    public double[] getCommandedDriveValues() {
-
-        double[] values = {commandedForward, commandedStrafe, commandedRotation};
-
-        return values;
-
-    }
-
-    public boolean getIsFieldRelative() {
-
-        return isCommandedFieldRelative;
-
-    }
-
+    
+    /*
+     * Resets the navX to 0 position;
+     */
     public void resetImu() {
         navx.reset();
         simNavx.resetToPose(new Pose2d());
     }
+ 
+    public void setRotationState(double radians) {
+        thetaController.setSetpoint(radians);
+    }
 
-    // Returns a Translation2d representing the linear robot speed in field coordinates.
+    /** Returns a Translation2d representing the linear robot speed in field coordinates. */
     public Translation2d getFieldRelativeLinearSpeedsMPS() {
+        // Get robot relative speeds from module states
         ChassisSpeeds robotRelativeSpeeds = m_kinematics.toChassisSpeeds(getModuleStates());
+        // Get field relative speeds by undoing the field-robot conversion (which was just a rotation by the heading)
         ChassisSpeeds fieldRelativeSpeeds = ChassisSpeeds.fromFieldRelativeSpeeds(
             robotRelativeSpeeds.vxMetersPerSecond,
             robotRelativeSpeeds.vyMetersPerSecond,
             robotRelativeSpeeds.omegaRadiansPerSecond,
             getPoseHeading().unaryMinus()
         );
+        // Convert to translation
         Translation2d translation = new Translation2d(fieldRelativeSpeeds.vxMetersPerSecond, fieldRelativeSpeeds.vyMetersPerSecond);
-        if (NomadMathUtil.getDistance(translation) < 0.01) {
+        // to avoid angle issues near 0, if the distance is 0.01 or less just return (0, 0)
+        if (translation.getNorm() < 0.01) {
             return new Translation2d();
         }
         else {
@@ -433,7 +340,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     @Override
     public void simulationPeriodic() {
         
-        // set inputs
+        // set inputs. Set 0 if the robot is disabled.
         if(!DriverStation.isEnabled()){
             for(int idx = 0; idx < QuadSwerveSim.NUM_MODULES; idx++){
                 moduleSims.get(idx).setInputVoltages(0.0, 0.0);
@@ -466,6 +373,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
             modules.get(idx).setSimState(azmthPos, wheelPos, wheelVel);
            
         }
+        // Set the gyro based on the difference between the previous pose and this pose.
         simNavx.update(quadSwerveSim.getCurPose(), prevRobotPose);
     }
 
@@ -478,16 +386,16 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         // Draw a pose that is based on the robot pose, but shifted by the translation of the module relative to robot center,
         // then rotated around its own center by the angle of the module.
         field.getObject("frontLeft").setPose(
-            getPose().transformBy(new Transform2d(robotToModuleTL.get(FL), getModuleStates()[0].angle))
+            getPose().transformBy(new Transform2d(ModuleConstants.FL.centerOffset, getModuleStates()[FL].angle))
         );
         field.getObject("frontRight").setPose(
-            getPose().transformBy(new Transform2d(robotToModuleTL.get(FR),getModuleStates()[1].angle))
+            getPose().transformBy(new Transform2d(ModuleConstants.FR.centerOffset ,getModuleStates()[FR].angle))
         );
         field.getObject("backLeft").setPose(
-            getPose().transformBy(new Transform2d(robotToModuleTL.get(BL), getModuleStates()[2].angle))
+            getPose().transformBy(new Transform2d(ModuleConstants.BL.centerOffset, getModuleStates()[BL].angle))
         );
         field.getObject("backRight").setPose(
-            getPose().transformBy(new Transform2d(robotToModuleTL.get(BR), getModuleStates()[3].angle))
+            getPose().transformBy(new Transform2d(ModuleConstants.BR.centerOffset, getModuleStates()[BR].angle))
         );
         field.getObject("simPose").setPose(quadSwerveSim.getCurPose());
     }
@@ -500,33 +408,30 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
                                    1.0/WHEEL_REVS_PER_ENC_REV,
                                    1.0/AZMTH_REVS_PER_ENC_REV, // same as motor rotations because NEO encoder is on motor shaft
                                    1.0/WHEEL_REVS_PER_ENC_REV,
-                                   1.3,
-                                   0.7,
+                                   1.5,
+                                   2,
                                    ROBOT_MASS_kg * 9.81 / QuadSwerveSim.NUM_MODULES, 
                                    0.01 
                                    );
     }
-
-    static SwerveModule swerveModuleFactory(int driveMotorId, int rotationMotorId, int magEncoderId, double measuredOffsetRadians, String name) {
-        SwerveModule module = new SwerveModule(driveMotorId, rotationMotorId, magEncoderId, measuredOffsetRadians, name);
-        module.resetDistance();
-        return module;
-    }
+    
 
     public void resetRelativeRotationEncoders() {
-        frontLeft.initRotationOffset();
-        frontRight.initRotationOffset();
-        rearLeft.initRotationOffset();
-        rearRight.initRotationOffset();
+        /* Note that we use the class name not a variable name.
+         * This way we pass a method of the general SwerveModule class to be called
+         * as each module.
+         * So this expands to:
+         *  modules.get(0).initRotationOffset();
+         *  modules.get(1).initRotationOffset();
+         *  ...
+         */
+        modules.forEach(SwerveModule::initRotationOffset);
     }
 
     public void resetPID() {
         xController.reset();
         yController.reset();
-        thetaController.reset(new TrapezoidProfile.State(getPoseHeading().getRadians(), 0));
-        // xController.reset(odometry.getPoseMeters().getX());
-        // yController.reset(odometry.getPoseMeters().getY());
-        //thetaController.reset();
+        thetaController.reset();
     }
 
     /****COMMANDS */
@@ -552,6 +457,18 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         return command;
     }
 
+    /**
+     * For use with PPChasePoseCommand
+     * Generates a PathPlannerTrajectory on the fly to drive to the target pose.
+     * Takes into account the current speed of the robot for the start point.
+     * The returned PathPlannerTrajectory will go straight towards the target from the robot pose.
+     * The component of the current velocity that points toward the target will be used as the initial
+     * velocity of the trajectory.
+     * @param robotPose the current robot pose
+     * @param target the target pose
+     * @param currentSpeedVectorMPS a Translation2d where x and y are the robot's x and y field-relative speeds in m/s.
+     * @return a PathPlannerTrajectory to the target pose.
+     */
     public static PathPlannerTrajectory generateTrajectoryToPose(Pose2d robotPose, Pose2d target, Translation2d currentSpeedVectorMPS) {
 
                 
@@ -591,14 +508,23 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
                 return new PathPlannerTrajectory();
     }
 
-    public Command chasePoseC(Supplier<Pose2d> poseSupplier, Field2d outputField) {
+    /**
+     * Creates a new pose-chase command. 
+     * This command generates and follows the target pose supplied by targetSupplier.
+     * If the target has moved since the last generation, regen the trajectory.
+     * If the trajectory is finished, switch to direct x-y-theta PID to hold the pose.
+     * @param targetSupplier the Supplier for the target Pose2d.
+     * @return the PPChasePoseCommand
+     */
+    public Command chasePoseC(Supplier<Pose2d> targetSupplier) {
         return new PPChasePoseCommand(
-            poseSupplier,
+            targetSupplier,
             this::getPose,
             holonomicDriveController,
             this::drive,
-            outputField.getObject("path")::setTrajectory,
+            (PathPlannerTrajectory traj) -> {}, // empty output for current trajectory.
             (startPose, endPose)->DrivebaseS.generateTrajectoryToPose(startPose, endPose, getFieldRelativeLinearSpeedsMPS()),
             this);
     }
+
 }

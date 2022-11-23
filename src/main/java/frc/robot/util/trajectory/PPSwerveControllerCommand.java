@@ -1,12 +1,11 @@
 package frc.robot.util.trajectory;
 
-import java.nio.file.Path;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.PathPlannerTrajectory.PathPlannerState;
-import frc.robot.util.trajectory.PPHolonomicDriveController;
+import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;

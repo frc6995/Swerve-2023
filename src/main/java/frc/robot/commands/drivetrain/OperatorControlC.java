@@ -3,8 +3,8 @@ package frc.robot.commands.drivetrain;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants.DriveConstants;
@@ -30,8 +30,8 @@ public class OperatorControlC extends CommandBase {
     private final SlewRateLimiter yRateLimiter = new SlewRateLimiter(3);
     private final DoubleSupplier rotation;
     private final SlewRateLimiter thetaRateLimiter = new SlewRateLimiter(2);
-    
-    private final boolean isFieldRelative;
+
+    private final double MAX_LINEAR_SPEED = 8;
 
     public OperatorControlC(
         DoubleSupplier fwdX, 
@@ -45,8 +45,6 @@ public class OperatorControlC extends CommandBase {
         forwardY = fwdY;
         rotation = rot;
 
-        isFieldRelative = true;
-
         addRequirements(subsystem);
 
     }
@@ -56,12 +54,10 @@ public class OperatorControlC extends CommandBase {
         xRateLimiter.reset(0);
         yRateLimiter.reset(0);
         thetaRateLimiter.reset(0);
-        drive.resetThetaProfile(drive.getPoseHeading());
     }
     
     @Override
     public void execute() {
-
         /**
          * Units are given in meters per second radians per second
          * Since joysticks give output from -1 to 1, we multiply the outputs by the max speed
@@ -72,13 +68,17 @@ public class OperatorControlC extends CommandBase {
         fwdX = Math.copySign(fwdX, fwdX);
         fwdX = deadbandInputs(fwdX);
         fwdX = xRateLimiter.calculate(fwdX);
-        fwdX *= Units.feetToMeters(8);
 
         double fwdY = -forwardY.getAsDouble();
         fwdY = Math.copySign(fwdY, fwdY);
         fwdY = deadbandInputs(fwdY);
         fwdY = yRateLimiter.calculate(fwdY);
-        fwdY *= Units.feetToMeters(8);
+
+        double driveDirectionRadians = Math.atan2(fwdY, fwdX);
+        double driveMagnitude = Math.hypot(fwdX, fwdY);
+        driveMagnitude *= MAX_LINEAR_SPEED;
+        fwdX = driveMagnitude * Math.cos(driveDirectionRadians);
+        fwdY = driveMagnitude * Math.sin(driveDirectionRadians);
 
         double rot = -rotation.getAsDouble();
         //rot = Math.copySign(rot * rot, rot);
@@ -86,7 +86,7 @@ public class OperatorControlC extends CommandBase {
         rot = thetaRateLimiter.calculate(rot);
         rot *= Units.degreesToRadians(DriveConstants.teleopTurnRateDegPerSec);
 
-        drive.driveFieldRelativeHeading(ChassisSpeeds.fromFieldRelativeSpeeds(new ChassisSpeeds(fwdX, fwdY, rot), drive.getPoseHeading().unaryMinus()));
+        drive.driveFieldRelativeHeading(new ChassisSpeeds(fwdX, fwdY, rot));
     }
 
     // method to deadband inputs to eliminate tiny unwanted values from the joysticks

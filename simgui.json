@@ -11,6 +11,11 @@
   "NTProvider": {
     "types": {
       "/FMSInfo": "FMSInfo",
+      "/Shuffleboard/DrivebaseS/bl": "Subsystem",
+      "/Shuffleboard/DrivebaseS/br": "Subsystem",
+      "/Shuffleboard/DrivebaseS/fl": "Subsystem",
+      "/Shuffleboard/DrivebaseS/fr": "Subsystem",
+      "/Shuffleboard/DrivebaseS/thetaController": "PIDController",
       "/Shuffleboard/RobotContainer/autoSelector": "String Chooser",
       "/Shuffleboard/RobotContainer/drivebaseS": "Subsystem",
       "/Shuffleboard/RobotContainer/field": "Field2d",
@@ -84,6 +89,9 @@
           "SwerveModule-RL-[16,15]": {
             "open": true
           },
+          "bl": {
+            "open": true
+          },
           "open": true,
           "thetaController": {
             "open": true
@@ -92,7 +100,8 @@
         "RobotContainer": {
           "field": {
             "open": true
-          }
+          },
+          "open": true
         },
         "open": true
       },

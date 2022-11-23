@@ -8,12 +8,16 @@
     {
       "axisConfig": [
         {
-          "decKey": 65,
-          "incKey": 68
+          "decKey": 87,
+          "decayRate": 1.0,
+          "incKey": 83,
+          "keyRate": 1.0
         },
         {
-          "decKey": 87,
-          "incKey": 83
+          "decKey": 68,
+          "decayRate": 1.0,
+          "incKey": 65,
+          "keyRate": 1.0
         },
         {
           "decKey": 69,

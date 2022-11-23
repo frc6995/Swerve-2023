@@ -1,39 +1,12 @@
 package frc.robot;
 
-import java.util.Arrays;
-import java.util.List;
-
 import edu.wpi.first.math.controller.SimpleMotorFeedforward;
-import edu.wpi.first.math.geometry.Rotation2d;
-import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 
 public class Constants {
-
-    public static final class CANDevices {
-
-        public static final int frontLeftRotationMotorId = 17;
-        public static final int frontLeftDriveMotorId = 18;
-
-        public static final int frontRightRotationMotorId = 11;
-        public static final int frontRightDriveMotorId = 12;
-
-        public static final int rearLeftRotationMotorId = 15;
-        public static final int rearLeftDriveMotorId = 16;
-
-        public static final int rearRightRotationMotorId = 13;
-        public static final int rearRightDriveMotorId = 14;
-
-
-        public static final int frontLeftRotationEncoderId = 6;
-        public static final int frontRightRotationEncoderId = 7;
-        public static final int rearLeftRotationEncoderId = 8;
-        public static final int rearRightRotationEncoderId = 9;
-
-    }
 
     public static final class InputDevices {
 
@@ -64,25 +37,39 @@ public class Constants {
         // Internal objects used to track where the modules are at relative to
         // the center of the robot, and all the implications that spacing has.
         static private double HW = WHEEL_BASE_WIDTH_M/2.0;
-        static public final List<Translation2d> robotToModuleTL = Arrays.asList(
-            new Translation2d( HW,  HW), //FL
-            new Translation2d( HW, -HW), //FR
-            new Translation2d(-HW,  HW), //BL
-            new Translation2d(-HW, -HW)  //BR
-        );
 
-        static public final List<Transform2d> robotToModuleTF = Arrays.asList(
-            new Transform2d(robotToModuleTL.get(FL), new Rotation2d(0.0)),
-            new Transform2d(robotToModuleTL.get(FR), new Rotation2d(0.0)),
-            new Transform2d(robotToModuleTL.get(BL), new Rotation2d(0.0)),
-            new Transform2d(robotToModuleTL.get(BR), new Rotation2d(0.0)) 
-        );
+        public enum ModuleConstants {
+            FL("FL", 18, 17, 6, 5.708331, HW, HW),
+            FR("FR", 12, 11, 7, 3.783000, HW, -HW),
+            BL("BR", 16, 15, 8, 1.787997, -HW, HW),
+            BR("FL", 14, 13, 9, 5.660000, -HW, -HW);
+    
+            public final String name;
+            public final int driveMotorID;
+            public final int rotationMotorID;
+            public final int magEncoderID;
+            /**
+             * absolute encoder offsets for the wheels
+             * 180 degrees added to offset values to invert one side of the robot so that it doesn't spin in place
+             */
+            public final double magEncoderOffset;
+            public final Translation2d centerOffset;
+            private ModuleConstants(String name, int driveMotorID, int rotationMotorID, int magEncoderID, double magEncoderOffset, double xOffset, double yOffset) {
+                this.name = name;
+                this.driveMotorID = driveMotorID;
+                this.rotationMotorID = rotationMotorID;
+                this.magEncoderID = magEncoderID;
+                this.magEncoderOffset = magEncoderOffset;
+                centerOffset = new Translation2d(xOffset, yOffset);
+    
+            }
+        }
 
         static public final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
-            robotToModuleTL.get(FL), 
-            robotToModuleTL.get(FR), 
-            robotToModuleTL.get(BL), 
-            robotToModuleTL.get(BR)
+            ModuleConstants.FL.centerOffset,
+            ModuleConstants.FR.centerOffset,
+            ModuleConstants.BL.centerOffset,
+            ModuleConstants.BR.centerOffset
         );
 
         
