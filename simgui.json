@@ -86,6 +86,9 @@
           "open": true
         },
         "DrivebaseS": {
+          "SwerveModule-FR-[12,11]": {
+            "open": true
+          },
           "SwerveModule-RL-[16,15]": {
             "open": true
           },
@@ -120,6 +123,11 @@
     "Plot <0>": {
       "plots": [
         {
+          "axis": [
+            {
+              "autoFit": true
+            }
+          ],
           "height": 314,
           "series": [
             {
@@ -139,6 +147,24 @@
                 1.0
               ],
               "id": "NT:/Shuffleboard/DrivebaseS/getHeading"
+            },
+            {
+              "color": [
+                0.3333333432674408,
+                0.658823549747467,
+                0.4078431725502014,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getRotationSetpoint"
+            },
+            {
+              "color": [
+                0.7686275243759155,
+                0.30588236451148987,
+                0.32156863808631897,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getMagEncoderAngle"
             }
           ]
         },
@@ -152,14 +178,24 @@
           "series": [
             {
               "color": [
-                0.3333333432674408,
-                0.658823549747467,
-                0.4078431725502014,
+                0.2980392277240753,
+                0.44705885648727417,
+                0.6901960968971252,
                 1.0
               ],
-              "id": "navX-Sensor[0]-Yaw"
+              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getVelocitySetpoint"
+            },
+            {
+              "color": [
+                0.7686275243759155,
+                0.30588236451148987,
+                0.32156863808631897,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getCurrentVelocityMetersPerSecond"
             }
-          ]
+          ],
+          "viewTime": 2.699997901916504
         }
       ]
     }

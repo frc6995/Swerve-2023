@@ -3,9 +3,11 @@ package frc.robot.commands.drivetrain;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.filter.SlewRateLimiter2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.DrivebaseS;
@@ -28,10 +30,11 @@ public class OperatorControlC extends CommandBase {
     private final SlewRateLimiter xRateLimiter = new SlewRateLimiter(3);
     private final DoubleSupplier forwardY;
     private final SlewRateLimiter yRateLimiter = new SlewRateLimiter(3);
+    private final SlewRateLimiter2d translationLimiter = new SlewRateLimiter2d(2);
     private final DoubleSupplier rotation;
     private final SlewRateLimiter thetaRateLimiter = new SlewRateLimiter(2);
 
-    private final double MAX_LINEAR_SPEED = 8;
+    private final double MAX_LINEAR_SPEED = Units.feetToMeters(8);
 
     public OperatorControlC(
         DoubleSupplier fwdX, 
@@ -67,18 +70,25 @@ public class OperatorControlC extends CommandBase {
         double fwdX = -forwardX.getAsDouble();
         fwdX = Math.copySign(fwdX, fwdX);
         fwdX = deadbandInputs(fwdX);
-        fwdX = xRateLimiter.calculate(fwdX);
 
         double fwdY = -forwardY.getAsDouble();
         fwdY = Math.copySign(fwdY, fwdY);
         fwdY = deadbandInputs(fwdY);
-        fwdY = yRateLimiter.calculate(fwdY);
 
         double driveDirectionRadians = Math.atan2(fwdY, fwdX);
         double driveMagnitude = Math.hypot(fwdX, fwdY);
-        driveMagnitude *= MAX_LINEAR_SPEED;
+        
         fwdX = driveMagnitude * Math.cos(driveDirectionRadians);
         fwdY = driveMagnitude * Math.sin(driveDirectionRadians);
+
+        
+
+        SlewRateLimiter2d.State limitedTranslation = translationLimiter.new State(fwdX, fwdY);
+        limitedTranslation.x *= MAX_LINEAR_SPEED;
+        limitedTranslation.y *= MAX_LINEAR_SPEED;
+        SmartDashboard.putNumber ("vx", limitedTranslation.x);
+        SmartDashboard.putNumber ("vy", limitedTranslation.y);
+        
 
         double rot = -rotation.getAsDouble();
         //rot = Math.copySign(rot * rot, rot);
@@ -86,7 +96,7 @@ public class OperatorControlC extends CommandBase {
         rot = thetaRateLimiter.calculate(rot);
         rot *= Units.degreesToRadians(DriveConstants.teleopTurnRateDegPerSec);
 
-        drive.driveFieldRelativeHeading(new ChassisSpeeds(fwdX, fwdY, rot));
+        drive.driveFieldRelativeHeading(new ChassisSpeeds(limitedTranslation.x, limitedTranslation.y, rot));
     }
 
     // method to deadband inputs to eliminate tiny unwanted values from the joysticks
