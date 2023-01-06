@@ -9,7 +9,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
-import edu.wpi.first.wpilibj.apriltag.AprilTagFieldLayout;
+
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field3d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
@@ -69,7 +69,7 @@ public class RobotContainer {
                     Units.degreesToRadians(gamepad.getHID().getPOV()))
             )
         );
-        gamepad.a().onTrue(drivebaseS.chasePoseC(target::getPose).until(gamepad.a().rising()));
+        gamepad.a().toggleOnTrue(drivebaseS.chasePoseC(target::getPose));
     }
 
     public Command getAutonomousCommand() {

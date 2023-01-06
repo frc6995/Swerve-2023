@@ -274,7 +274,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
      */
     public void resetPose(Pose2d pose) {
         quadSwerveSim.modelReset(pose);
-        odometry.resetPosition(pose, getHeading(), getModulePositions() );
+        odometry.resetPosition(getHeading(), getModulePositions(), pose );
     }
 
     // reset the measured distance driven for each module
