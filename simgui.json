@@ -128,7 +128,7 @@
               "autoFit": true
             }
           ],
-          "height": 402,
+          "height": 400,
           "series": [
             {
               "color": [
@@ -165,6 +165,24 @@
                 1.0
               ],
               "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getMagEncoderAngle"
+            },
+            {
+              "color": [
+                0.5058823823928833,
+                0.44705885648727417,
+                0.7019608020782471,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getAppliedDriveVoltage"
+            },
+            {
+              "color": [
+                0.5764706134796143,
+                0.4705882668495178,
+                0.3764706254005432,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getVelocitySetpoint"
             }
           ]
         },
@@ -174,7 +192,7 @@
               "autoFit": true
             }
           ],
-          "height": 402,
+          "height": 400,
           "series": [
             {
               "color": [
