@@ -11,6 +11,7 @@ import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.DutyCycleEncoder;
+import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.DriveConstants.ModuleConstants;
@@ -33,7 +34,7 @@ public class SwerveModule extends SubsystemBase implements Loggable{
     private static final double rotationkP = 2.5;
     private static final double rotationkD = 0.0;
 
-    private static final double drivekP = 0;
+    private static final double drivekP = 0.5;
 
     private final CANSparkMax driveMotor;
     private final CANSparkMax rotationMotor;
@@ -227,7 +228,10 @@ public class SwerveModule extends SubsystemBase implements Loggable{
         
         double goal = this.desiredState.angle.getRadians();
         double measurement = getCanEncoderAngle().getRadians();
-        double rotationVolts = rotationPIDController.calculate(measurement, goal) + 0.1;
+        double rotationVolts = rotationPIDController.calculate(measurement, goal);
+        if (RobotBase.isReal()) {
+            rotationVolts += 0.1;
+        }
         double driveVolts = drivePIDController.calculate(getCurrentVelocityMetersPerSecond(), this.desiredState.speedMetersPerSecond)
             + DriveConstants.driveFeedForward.calculate(this.desiredState.speedMetersPerSecond);
             //(this.desiredState.speedMetersPerSecond - previousState.speedMetersPerSecond) / 0.02);
