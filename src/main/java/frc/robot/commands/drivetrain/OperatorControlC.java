@@ -81,28 +81,19 @@ public class OperatorControlC extends CommandBase {
         fwdX = driveMagnitude * Math.cos(driveDirectionRadians);
         fwdY = driveMagnitude * Math.sin(driveDirectionRadians);
 
-        
-
-        SlewRateLimiter2d.State limitedTranslation = translationLimiter.new State(fwdX, fwdY);
-        limitedTranslation.x *= MAX_LINEAR_SPEED;
-        limitedTranslation.y *= MAX_LINEAR_SPEED;
-        SmartDashboard.putNumber ("vx", limitedTranslation.x);
-        SmartDashboard.putNumber ("vy", limitedTranslation.y);
-        
-
         double rot = -rotation.getAsDouble();
         //rot = Math.copySign(rot * rot, rot);
         rot = deadbandInputs(rot);
         rot = thetaRateLimiter.calculate(rot);
         rot *= Units.degreesToRadians(DriveConstants.teleopTurnRateDegPerSec);
 
-        drive.driveFieldRelativeHeading(new ChassisSpeeds(limitedTranslation.x, limitedTranslation.y, rot));
+        drive.driveFieldRelative(new ChassisSpeeds(fwdX, fwdY, rot));
     }
 
     // method to deadband inputs to eliminate tiny unwanted values from the joysticks
     public double deadbandInputs(double input) {
 
-        if (Math.abs(input) < 0.07) return 0.0;
+        if (Math.abs(input) < 0.2) return 0.0;
         return input;
 
     }

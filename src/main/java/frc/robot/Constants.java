@@ -41,8 +41,8 @@ public class Constants {
         public enum ModuleConstants {
             FL("FL", 18, 17, 6, 5.708331, HW, HW),
             FR("FR", 12, 11, 7, 3.783000, HW, -HW),
-            BL("BR", 16, 15, 8, 1.787997, -HW, HW),
-            BR("FL", 14, 13, 9, 5.660000, -HW, -HW);
+            BL("BL", 16, 15, 8, 1.787997, -HW, HW),
+            BR("BR", 14, 13, 9, 5.660000, -HW, -HW);
     
             public final String name;
             public final int driveMotorID;
@@ -83,11 +83,10 @@ public class Constants {
         /** ks, kv, ka */ 
         public static final double[] DRIVE_FF = {0.11452, 1.9844, 0.31123};
 
-        public static final SimpleMotorFeedforward driveFeedForward = new SimpleMotorFeedforward(DRIVE_FF[0], DRIVE_FF[1], DRIVE_FF[2]);
-        
+        public static final SimpleMotorFeedforward driveFeedForward = new SimpleMotorFeedforward(DRIVE_FF[0], DRIVE_FF[1], DRIVE_FF[2]);        
 
         public static final double MAX_MODULE_SPEED_FPS = 19;
-        public static final double teleopTurnRateDegPerSec = 540; //Rate the robot will spin with full rotation command
+        public static final double teleopTurnRateDegPerSec = 360; //Rate the robot will spin with full rotation command
 
         public static final int ENC_PULSE_PER_REV = 1;
         public static final double WHEEL_ENC_COUNTS_PER_WHEEL_REV = ENC_PULSE_PER_REV/ WHEEL_REVS_PER_ENC_REV;  //Assume 1-1 gearing for now
