@@ -54,6 +54,9 @@ public class NomadMathUtil {
         for (SwerveModuleState moduleState : desiredStates) {
           realMaxSpeed = Math.max(realMaxSpeed, Math.abs(moduleState.speedMetersPerSecond));
         }
+        if(realMaxSpeed < k*kModuleMaxSpeedMetersPerSecond) {
+            return;
+        }
       
 
         double scale = Math.min(k * kModuleMaxSpeedMetersPerSecond / realMaxSpeed, 1);
