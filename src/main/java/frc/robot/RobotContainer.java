@@ -45,7 +45,7 @@ public class RobotContainer {
     PathPlannerTrajectory pathPlannerTrajectory;
 
     public RobotContainer() {
-        target.setPose(new Pose2d(4, 4, new Rotation2d()));
+        target.setPose(new Pose2d(0, 0, new Rotation2d()));
         
         
         drivebaseS.setDefaultCommand(
