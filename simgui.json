@@ -31,7 +31,7 @@
           "length": 0.4000000059604645,
           "width": 0.4000000059604645
         },
-        "bottom": 903,
+        "bottom": 544,
         "frontLeft": {
           "length": 0.4000000059604645,
           "width": 0.4000000059604645
@@ -40,9 +40,9 @@
           "length": 0.4000000059604645,
           "width": 0.4000000059604645
         },
-        "height": 8.229599952697754,
-        "image": "C:\\Users\\jashu\\PathWeaver\\Games\\2022 Rapid React\\2022-field.png",
-        "left": 74,
+        "height": 8.013679504394531,
+        "image": "C:\\Users\\jashu\\PathWeaver\\Games\\2023 Charged Up\\2023-field.png",
+        "left": 46,
         "path": {
           "arrows": false,
           "style": "Line"
@@ -51,7 +51,7 @@
           "arrows": false,
           "style": "Line"
         },
-        "right": 1781,
+        "right": 1088,
         "simPose": {
           "color": [
             0.2559240758419037,
@@ -71,8 +71,8 @@
           "style": "Box/Image",
           "width": 1.5
         },
-        "top": 45,
-        "width": 16.459199905395508,
+        "top": 36,
+        "width": 16.541748046875,
         "window": {
           "visible": true
         }
