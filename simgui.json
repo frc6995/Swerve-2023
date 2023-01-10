@@ -23,6 +23,22 @@
     },
     "windows": {
       "/Shuffleboard/RobotContainer/field": {
+        "BackLeft": {
+          "length": 0.4000000059604645,
+          "width": 0.4000000059604645
+        },
+        "BackRight": {
+          "length": 0.4000000059604645,
+          "width": 0.4000000059604645
+        },
+        "FrontLeft": {
+          "length": 0.4000000059604645,
+          "width": 0.4000000059604645
+        },
+        "FrontRight": {
+          "length": 0.4000000059604645,
+          "width": 0.4000000059604645
+        },
         "backLeft": {
           "length": 0.4000000059604645,
           "width": 0.4000000059604645
@@ -53,12 +69,14 @@
         },
         "right": 1088,
         "simPose": {
+          "arrows": false,
           "color": [
             0.2559240758419037,
             0.26753461360931396,
             0.48523205518722534,
             255.0
-          ]
+          ],
+          "style": "Hidden"
         },
         "target": {
           "color": [
@@ -81,6 +99,11 @@
   },
   "NetworkTables": {
     "transitory": {
+      "LiveWindow": {
+        ".status": {
+          "open": true
+        }
+      },
       "Shuffleboard": {
         ".recording": {
           "open": true
@@ -95,12 +118,12 @@
           "bl": {
             "open": true
           },
-          "open": true,
-          "thetaController": {
-            "open": true
-          }
+          "open": true
         },
         "RobotContainer": {
+          "drivebaseS": {
+            "open": true
+          },
           "field": {
             "open": true
           },

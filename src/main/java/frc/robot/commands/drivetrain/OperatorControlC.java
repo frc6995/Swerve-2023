@@ -3,7 +3,6 @@ package frc.robot.commands.drivetrain;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
-import edu.wpi.first.math.filter.SlewRateLimiter2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
@@ -19,22 +18,23 @@ public class OperatorControlC extends CommandBase {
      * Can't be inlined efficiently if we want to edit the inputs in any way (deadband, square, etc.)
      */
 
-    private final DrivebaseS drive;
+    private final DrivebaseS m_drive;
 
     /**
      * Joysticks return DoubleSuppliers when the get methods are called
      * This is so that joystick getter methods can be passed in as a parameter but will continuously update, 
      * versus using a double which would only update when the constructor is called
      */
-    private final DoubleSupplier forwardX;
-    private final SlewRateLimiter xRateLimiter = new SlewRateLimiter(3);
-    private final DoubleSupplier forwardY;
-    private final SlewRateLimiter yRateLimiter = new SlewRateLimiter(3);
-    private final SlewRateLimiter2d translationLimiter = new SlewRateLimiter2d(2);
-    private final DoubleSupplier rotation;
-    private final SlewRateLimiter thetaRateLimiter = new SlewRateLimiter(2);
+    private final DoubleSupplier m_forwardX;
+    private final SlewRateLimiter m_xRateLimiter = new SlewRateLimiter(3);
+    private final DoubleSupplier m_forwardY;
+    private final SlewRateLimiter m_yRateLimiter = new SlewRateLimiter(3);
+    private final DoubleSupplier m_rotation;
+    private final SlewRateLimiter m_thetaRateLimiter = new SlewRateLimiter(2);
 
     private final double MAX_LINEAR_SPEED = Units.feetToMeters(8);
+
+    public static final double MAX_TURN_SPEED = Units.degreesToRadians(360);
 
     public OperatorControlC(
         DoubleSupplier fwdX, 
@@ -43,10 +43,10 @@ public class OperatorControlC extends CommandBase {
         DrivebaseS subsystem
     ) {
 
-        drive = subsystem;
-        forwardX = fwdX;
-        forwardY = fwdY;
-        rotation = rot;
+        m_drive = subsystem;
+        m_forwardX = fwdX;
+        m_forwardY = fwdY;
+        m_rotation = rot;
 
         addRequirements(subsystem);
 
@@ -54,9 +54,9 @@ public class OperatorControlC extends CommandBase {
 
     @Override
     public void initialize() {
-        xRateLimiter.reset(0);
-        yRateLimiter.reset(0);
-        thetaRateLimiter.reset(0);
+        m_xRateLimiter.reset(0);
+        m_yRateLimiter.reset(0);
+        m_thetaRateLimiter.reset(0);
     }
     
     @Override
@@ -67,27 +67,26 @@ public class OperatorControlC extends CommandBase {
          * Otherwise, our max speed would be 1 meter per second and 1 radian per second
          */
 
-        double fwdX = -forwardX.getAsDouble();
+        double fwdX = -m_forwardX.getAsDouble();
         fwdX = Math.copySign(fwdX, fwdX);
         fwdX = deadbandInputs(fwdX);
 
-        double fwdY = -forwardY.getAsDouble();
+        double fwdY = -m_forwardY.getAsDouble();
         fwdY = Math.copySign(fwdY, fwdY);
         fwdY = deadbandInputs(fwdY);
 
         double driveDirectionRadians = Math.atan2(fwdY, fwdX);
-        double driveMagnitude = Math.hypot(fwdX, fwdY);
-        
+        double driveMagnitude = Math.hypot(fwdX, fwdY) * MAX_LINEAR_SPEED;
         fwdX = driveMagnitude * Math.cos(driveDirectionRadians);
         fwdY = driveMagnitude * Math.sin(driveDirectionRadians);
 
-        double rot = -rotation.getAsDouble();
+        double rot = -m_rotation.getAsDouble();
         //rot = Math.copySign(rot * rot, rot);
         rot = deadbandInputs(rot);
-        rot = thetaRateLimiter.calculate(rot);
-        rot *= Units.degreesToRadians(DriveConstants.teleopTurnRateDegPerSec);
+        rot = m_thetaRateLimiter.calculate(rot);
+        rot *= Units.degreesToRadians(MAX_TURN_SPEED);
 
-        drive.driveFieldRelative(new ChassisSpeeds(fwdX, fwdY, rot));
+        m_drive.driveFieldRelative(new ChassisSpeeds(fwdX, fwdY, rot));
     }
 
     // method to deadband inputs to eliminate tiny unwanted values from the joysticks

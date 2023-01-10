@@ -2,24 +2,24 @@ package frc.robot.util.sim;
 
 /** Add your docs here. */
 public class SimEncoder {
-    private double position = 0;
-    private double velocity = 0;
+    private double mposition = 0;
+    private double m_velocity = 0;
 
     public SimEncoder() {}
 
-    public void setPosition(double position) {
-        this.position = position;
+    public void setMposition(double position) {
+        this.mposition = position;
     }
 
-    public double getPosition() {
-        return position;
+    public double getMposition() {
+        return mposition;
     }
 
-    public void setVelocity(double velocity) {
-        this.velocity = velocity;
+    public void setM_velocity(double velocity) {
+        this.m_velocity = velocity;
     }
 
-    public double getVelocity() {
-        return velocity;
+    public double getM_velocity() {
+        return m_velocity;
     }
 }

@@ -1,6 +1,5 @@
 package frc.robot;
 
-import edu.wpi.first.math.controller.SimpleMotorFeedforward;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
@@ -64,29 +63,25 @@ public class Constants {
     
             }
         }
-
-        static public final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
-            ModuleConstants.FL.centerOffset,
-            ModuleConstants.FR.centerOffset,
-            ModuleConstants.BL.centerOffset,
-            ModuleConstants.BR.centerOffset
-        );
-
         
         public static final double WHEEL_REVS_PER_ENC_REV = 1.0/5.14;
         public static final double AZMTH_REVS_PER_ENC_REV = 1.0/12.8;
 
-        public static final double rotationMotorMaxSpeedRadPerSec = 1.0;
-        public static final double rotationMotorMaxAccelRadPerSecSq = 1.0;
+        public static final double STEER_MAX_SPEED_RAD_PER_SEC = 7.8 * 2 * Math.PI;
+        public static final double STEER_MAX_ACCEL_RAD_PER_SEC_SQ = 400 * 2 * Math.PI;
 
         //kv: (12 volts * 60 s/min * 1/5.14 WRevs/MRevs * wheel rad * 2pi  / (6000 MRPM *
         /** ks, kv, ka */ 
-        public static final double[] DRIVE_FF = {0.11452, 1.9844, 0.31123};
+        public static final double[] DRIVE_FF_CONST = {0.11452, 1.9844, 0.31123};
 
-        public static final SimpleMotorFeedforward driveFeedForward = new SimpleMotorFeedforward(DRIVE_FF[0], DRIVE_FF[1], DRIVE_FF[2]);        
+        public static final double STEER_P = 2.5;
+        public static final double STEER_D = 0.0;
+    
+        public static final double DRIVE_P = 0.5;
+        public static final double DRIVE_D = 0.0;
+
 
         public static final double MAX_MODULE_SPEED_FPS = 19;
-        public static final double teleopTurnRateDegPerSec = 360; //Rate the robot will spin with full rotation command
 
         public static final int ENC_PULSE_PER_REV = 1;
         public static final double WHEEL_ENC_COUNTS_PER_WHEEL_REV = ENC_PULSE_PER_REV/ WHEEL_REVS_PER_ENC_REV;  //Assume 1-1 gearing for now
@@ -101,12 +96,5 @@ public class Constants {
         public static final TrapezoidProfile.Constraints THETA_DEFAULT_CONSTRAINTS = new TrapezoidProfile.Constraints(4*Math.PI, 16*Math.PI);
     
 
-    }
-
-    public static final class AutoConstants {
-
-        public static final double maxVelMetersPerSec = 2;
-        public static final double maxAccelMetersPerSecondSq = 1;
-        
     }
 }

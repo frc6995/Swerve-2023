@@ -2,8 +2,6 @@ package frc.robot;
 
 import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
 
-import com.pathplanner.lib.PathPlannerTrajectory;
-
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
@@ -29,59 +27,57 @@ public class RobotContainer {
      * Establishes the controls and subsystems of the robot
      */
 
-    private final CommandXboxController gamepad = new CommandXboxController(InputDevices.GAMEPAD_PORT);
+    private final CommandXboxController m_driverController = new CommandXboxController(InputDevices.GAMEPAD_PORT);
     @Log
-    private final DrivebaseS drivebaseS = new DrivebaseS();
+    private final DrivebaseS m_drivebaseS = new DrivebaseS();
 
     @Log
-    private final Field2d field = new Field2d();
+    private final Field2d m_field = new Field2d();
     @Log
-    private final Field3d field3d = new Field3d();
-    private final FieldObject2d target = field.getObject("target");
+    private final Field3d m_field3d = new Field3d();
+    private final FieldObject2d m_target = m_field.getObject("target");
     
     @Log
-    SendableChooser<Command> autoSelector = new SendableChooser<Command>();
-
-    PathPlannerTrajectory pathPlannerTrajectory;
+    SendableChooser<Command> m_autoSelector = new SendableChooser<Command>();
 
     public RobotContainer() {
-        target.setPose(new Pose2d(0, 0, new Rotation2d()));
+        m_target.setPose(new Pose2d(0, 0, new Rotation2d()));
         
         
-        drivebaseS.setDefaultCommand(
+        m_drivebaseS.setDefaultCommand(
             new OperatorControlC(
-                gamepad::getLeftY,
-                gamepad::getLeftX,
-                gamepad::getRightX,
-                drivebaseS
+                m_driverController::getLeftY,
+                m_driverController::getLeftX,
+                m_driverController::getRightX,
+                m_drivebaseS
             )
         );
 
         configureButtonBindings();
-        autoSelector.setDefaultOption("pathPlanner", new InstantCommand());
+        m_autoSelector.setDefaultOption("pathPlanner", new InstantCommand());
     }
 
     public void configureButtonBindings() {
-        new Trigger(RobotController::getUserButton).onTrue(runOnce(()->drivebaseS.resetPose(new Pose2d())));
-        gamepad.povCenter().onFalse(
+        new Trigger(RobotController::getUserButton).onTrue(runOnce(()->m_drivebaseS.resetPose(new Pose2d())));
+        m_driverController.povCenter().onFalse(
             runOnce(
-                ()->drivebaseS.setRotationState(
-                    Units.degreesToRadians(gamepad.getHID().getPOV()))
+                ()->m_drivebaseS.setRotationState(
+                    Units.degreesToRadians(m_driverController.getHID().getPOV()))
             )
         );
-        gamepad.a().toggleOnTrue(drivebaseS.chasePoseC(target::getPose));
+        m_driverController.a().toggleOnTrue(m_drivebaseS.chasePoseC(m_target::getPose));
     }
 
     public Command getAutonomousCommand() {
-        return autoSelector.getSelected();
+        return m_autoSelector.getSelected();
     }
 
     public void periodic() {
-        drivebaseS.drawRobotOnField(field);
-        field3d.setRobotPose(new Pose3d(drivebaseS.getPose()));
+        m_drivebaseS.drawRobotOnField(m_field);
+        m_field3d.setRobotPose(new Pose3d(m_drivebaseS.getPose()));
     }
 
     public void onEnabled(){
-        drivebaseS.resetRelativeRotationEncoders();
+        m_drivebaseS.resetRelativeRotationEncoders();
     }
 }

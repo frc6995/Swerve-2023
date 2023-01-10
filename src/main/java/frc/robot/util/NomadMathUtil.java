@@ -3,7 +3,6 @@ import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
 import edu.wpi.first.math.geometry.Translation2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 
 public class NomadMathUtil {
@@ -39,32 +38,7 @@ public class NomadMathUtil {
         }
         return voltage;
     }
-    /**
-     * An improved desaturation algorithm that takes into account the desired chassis speeds
-     */
-    public static void normalizeDrive(SwerveModuleState[] desiredStates, ChassisSpeeds speeds,
-         double kMaxTranslationalVelocity, double kMaxRotationalVelocity, double kModuleMaxSpeedMetersPerSecond) {
-        // Determine which of translation or rotation is closer to maximum
-        double translationalK = Math.hypot(speeds.vxMetersPerSecond, speeds.vyMetersPerSecond) / kMaxTranslationalVelocity;
-        double rotationalK = Math.abs(speeds.omegaRadiansPerSecond) / kMaxRotationalVelocity;
-        double k = Math.max(translationalK, rotationalK);
-      
-        // Find the how fast the fastest spinning drive motor is spinning                                       
-        double realMaxSpeed = 0.0;
-        for (SwerveModuleState moduleState : desiredStates) {
-          realMaxSpeed = Math.max(realMaxSpeed, Math.abs(moduleState.speedMetersPerSecond));
-        }
-        if(realMaxSpeed < k*kModuleMaxSpeedMetersPerSecond) {
-            return;
-        }
-      
-
-        double scale = Math.min(k * kModuleMaxSpeedMetersPerSecond / realMaxSpeed, 1);
-        for (SwerveModuleState moduleState : desiredStates) {
-          moduleState.speedMetersPerSecond *= scale;
-        }
-      }
-
+ 
       public static SwerveModuleState optimize(
       SwerveModuleState desiredState, Rotation2d currentAngle, double flipThreshold) {
         var delta = desiredState.angle.minus(currentAngle);
