@@ -15,10 +15,14 @@
       "/Shuffleboard/DrivebaseS/br": "Subsystem",
       "/Shuffleboard/DrivebaseS/fl": "Subsystem",
       "/Shuffleboard/DrivebaseS/fr": "Subsystem",
+      "/Shuffleboard/DrivebaseS/m_thetaController": "PIDController",
       "/Shuffleboard/DrivebaseS/thetaController": "PIDController",
       "/Shuffleboard/RobotContainer/autoSelector": "String Chooser",
       "/Shuffleboard/RobotContainer/drivebaseS": "Subsystem",
       "/Shuffleboard/RobotContainer/field": "Field2d",
+      "/Shuffleboard/RobotContainer/m_autoSelector": "String Chooser",
+      "/Shuffleboard/RobotContainer/m_drivebaseS": "Subsystem",
+      "/Shuffleboard/RobotContainer/m_field": "Field2d",
       "/SmartDashboard/PIDController[9]": "PIDController"
     },
     "windows": {
@@ -94,6 +98,40 @@
         "window": {
           "visible": true
         }
+      },
+      "/Shuffleboard/RobotContainer/m_field": {
+        "backLeft": {
+          "arrows": false,
+          "style": "Hidden",
+          "width": 0.4000000059604645
+        },
+        "backRight": {
+          "arrows": false,
+          "style": "Hidden"
+        },
+        "bottom": 544,
+        "frontLeft": {
+          "arrows": false
+        },
+        "height": 8.013679504394531,
+        "image": "C:\\Users\\jashu\\PathWeaver\\Games\\2023 Charged Up\\2023-field.png",
+        "left": 46,
+        "modules": {
+          "color": [
+            0.8818565607070923,
+            0.15627840161323547,
+            0.15627840161323547,
+            255.0
+          ],
+          "length": 0.4000000059604645,
+          "width": 0.4000000059604645
+        },
+        "right": 1088,
+        "top": 36,
+        "width": 16.541748046875,
+        "window": {
+          "visible": true
+        }
       }
     }
   },
@@ -125,6 +163,9 @@
             "open": true
           },
           "field": {
+            "open": true
+          },
+          "m_field": {
             "open": true
           },
           "open": true
