@@ -94,10 +94,7 @@
           "width": 1.5
         },
         "top": 36,
-        "width": 16.541748046875,
-        "window": {
-          "visible": true
-        }
+        "width": 16.541748046875
       },
       "/Shuffleboard/RobotContainer/m_field": {
         "backLeft": {
