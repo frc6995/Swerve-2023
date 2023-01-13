@@ -1,6 +1,9 @@
 package frc.robot;
 
+import edu.wpi.first.math.geometry.Rotation3d;
+import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
+import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
@@ -96,5 +99,11 @@ public class Constants {
         public static final TrapezoidProfile.Constraints THETA_DEFAULT_CONSTRAINTS = new TrapezoidProfile.Constraints(4*Math.PI, 16*Math.PI);
     
 
+    }
+
+    public static final class VisionConstants{
+        public static final Transform3d robotToCam = new Transform3d(
+            new Translation3d(Units.inchesToMeters(-5.25), 0, Units.inchesToMeters(32.5)), 
+            new Rotation3d());
     }
 }

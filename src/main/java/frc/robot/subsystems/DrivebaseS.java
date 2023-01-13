@@ -413,6 +413,29 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     }
 
     /****COMMANDS */
+    public Command driveTime(double speed, double time) {
+        return run(
+            ()->driveFieldRelative(
+                new ChassisSpeeds(speed, 0, 0)
+            )
+        )
+        .withTimeout(time);
+    }
+
+    public Command turnToHeading(Rotation2d heading) {
+        return run(()->{
+            driveFieldRelative(
+                new ChassisSpeeds(
+                    0, 0, 
+                    m_thetaController.calculate(
+                        getPoseHeading().getRadians(),
+                        heading.getRadians()
+                    )
+                )
+            );
+        });
+    }
+
     public Command pathPlannerCommand(Supplier<PathPlannerTrajectory> path) {
         PPSwerveControllerCommand command = new PPSwerveControllerCommand(
             path,
