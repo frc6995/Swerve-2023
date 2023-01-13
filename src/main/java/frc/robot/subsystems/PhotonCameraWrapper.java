@@ -42,11 +42,11 @@ import org.photonvision.PhotonCamera;
 import org.photonvision.RobotPoseEstimator;
 import org.photonvision.RobotPoseEstimator.PoseStrategy;
 
-public class PhotonS {
+public class PhotonCameraWrapper {
     public PhotonCamera photonCamera;
     public RobotPoseEstimator robotPoseEstimator;
 
-    public PhotonS() {
+    public PhotonCameraWrapper(String cameraName, Transform3d robotToCam) {
         // Set up a test arena of two apriltags at the center of each driver station set
         
         final AprilTag tag01 =
@@ -67,14 +67,14 @@ public class PhotonS {
         // Forward Camera
         photonCamera =
                 new PhotonCamera(
-                        "OV9281"); // Change the name of your camera here to whatever it is in the
+                        cameraName); // Change the name of your camera here to whatever it is in the
         // PhotonVision UI.
 
         // ... Add other cameras here
 
         // Assemble the list of cameras & mount locations
         var camList = new ArrayList<Pair<PhotonCamera, Transform3d>>();
-        camList.add(new Pair<PhotonCamera, Transform3d>(photonCamera, VisionConstants.robotToCam));
+        camList.add(new Pair<PhotonCamera, Transform3d>(photonCamera, robotToCam));
 
         robotPoseEstimator =
                 new RobotPoseEstimator(atfl, PoseStrategy.CLOSEST_TO_REFERENCE_POSE, camList);

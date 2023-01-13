@@ -13,6 +13,7 @@ import com.pathplanner.lib.controllers.PPHolonomicDriveController;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Transform2d;
@@ -30,6 +31,7 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
 import frc.robot.Constants.DriveConstants;
+import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.DriveConstants.ModuleConstants;
 import frc.robot.util.NomadMathUtil;
 import frc.robot.util.sim.SimGyroSensorModel;
@@ -67,7 +69,8 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
      * odometry for the robot, measured in meters for linear motion and radians for rotational motion
      * Takes in kinematics and robot angle for parameters
      */
-    private final SwerveDriveOdometry m_poseEstimator;
+    private final SwerveDrivePoseEstimator m_poseEstimator;
+    private final PhotonCameraWrapper m_cameraWrapper;
 
     private final List<SwerveModuleSim> m_moduleSims = List.of(
         DrivebaseS.swerveSimModuleFactory(),
@@ -97,11 +100,9 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         m_navx.reset();
         
         m_poseEstimator =
-        new SwerveDriveOdometry(
-            m_kinematics, 
-            new Rotation2d(getHeading().getRadians()),
-            getModulePositions()
-        );
+        new SwerveDrivePoseEstimator(m_kinematics, getHeading(), getModulePositions(), getPose());
+        
+        m_cameraWrapper = new PhotonCameraWrapper("OV9281", VisionConstants.robotToCam);
         resetPose(new Pose2d());
     }
 
@@ -237,7 +238,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
      * Based on drive encoder and gyro reading
      */
     public Pose2d getPose() {
-        return m_poseEstimator.getPoseMeters();
+        return m_poseEstimator.getEstimatedPosition();
     }
 
     /**
