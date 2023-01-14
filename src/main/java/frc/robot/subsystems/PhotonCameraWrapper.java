@@ -47,22 +47,9 @@ public class PhotonCameraWrapper {
     public RobotPoseEstimator robotPoseEstimator;
 
     public PhotonCameraWrapper(String cameraName, Transform3d robotToCam) {
-        // Set up a test arena of two apriltags at the center of each driver station set
-        
-        final AprilTag tag01 =
-                new AprilTag(
-                        01,
-                        new Pose3d(
-                        
-                         0.0, 0.0, 1.0, new Rotation3d())
-                        );
-        ArrayList<AprilTag> atList = new ArrayList<AprilTag>();
-        
-        atList.add(tag01);
-
         // TODO - once 2023 happens, replace this with just loading the 2023 field arrangement
-        AprilTagFieldLayout atfl =
-                new AprilTagFieldLayout(atList, 8.5, 4.02);
+        AprilTagFieldLayout atfl = VisionConstants.TAG_FIELD_LAYOUT;
+
 
         // Forward Camera
         photonCamera =
@@ -90,7 +77,7 @@ public class PhotonCameraWrapper {
 
         double currentTime = Timer.getFPGATimestamp();
         Optional<Pair<Pose3d, Double>> result = robotPoseEstimator.update();
-        if (result.isPresent()) {
+        if (result.isPresent() && result.get().getFirst() != null) {
             return new Pair<Pose2d, Double>(
                     result.get().getFirst().toPose2d(), currentTime - result.get().getSecond());
         } else {

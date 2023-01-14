@@ -24,6 +24,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
 import edu.wpi.first.wpilibj.SPI.Port;
@@ -100,14 +101,21 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         m_navx.reset();
         
         m_poseEstimator =
-        new SwerveDrivePoseEstimator(m_kinematics, getHeading(), getModulePositions(), getPose());
+        new SwerveDrivePoseEstimator(m_kinematics, getHeading(), getModulePositions(), new Pose2d());
         
         m_cameraWrapper = new PhotonCameraWrapper("OV9281", VisionConstants.robotToCam);
-        resetPose(new Pose2d());
+        resetPose(new Pose2d(1, 0, new Rotation2d()));
     }
 
     @Override
     public void periodic() {
+        var cam1Pose = m_cameraWrapper.getEstimatedGlobalPose(getPose());
+        if (cam1Pose.getFirst() != null) {
+            var pose = cam1Pose.getFirst();
+            var timestamp = cam1Pose.getSecond();
+            m_poseEstimator.addVisionMeasurement(pose, timestamp);
+        }
+
         // update the odometry every 20ms
         m_poseEstimator.update(getHeading(), getModulePositions());
     }

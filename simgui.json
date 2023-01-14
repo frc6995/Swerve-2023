@@ -133,6 +133,14 @@
           "width": 0.4000000059604645
         },
         "right": 1088,
+        "scurve": {
+          "arrows": false,
+          "style": "Hidden"
+        },
+        "target": {
+          "length": 2.0,
+          "width": 2.0
+        },
         "top": 36,
         "width": 16.541748046875,
         "window": {

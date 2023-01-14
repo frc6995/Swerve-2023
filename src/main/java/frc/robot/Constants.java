@@ -1,5 +1,11 @@
 package frc.robot;
 
+import java.io.IOException;
+import java.util.List;
+
+import edu.wpi.first.apriltag.AprilTag;
+import edu.wpi.first.apriltag.AprilTagFieldLayout;
+import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation3d;
 import edu.wpi.first.math.geometry.Transform3d;
 import edu.wpi.first.math.geometry.Translation2d;
@@ -7,6 +13,7 @@ import edu.wpi.first.math.geometry.Translation3d;
 import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
 import edu.wpi.first.math.trajectory.TrapezoidProfile;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.wpilibj.DriverStation;
 
 public class Constants {
 
@@ -102,8 +109,59 @@ public class Constants {
     }
 
     public static final class VisionConstants{
+
         public static final Transform3d robotToCam = new Transform3d(
             new Translation3d(Units.inchesToMeters(-5.25), 0, Units.inchesToMeters(32.5)), 
             new Rotation3d());
+        public static AprilTagFieldLayout TAG_FIELD_LAYOUT = new AprilTagFieldLayout(
+            List.of(
+                new AprilTag(
+                        1,
+                        new Pose3d(
+                        15.513558, 1.071626, 0.462788, new Rotation3d(0, 0, Math.PI))
+                        ),
+                new AprilTag(
+                        2,
+                        new Pose3d(
+                        15.513558, 2.748026, 0.462788, new Rotation3d(0, 0, Math.PI))
+                        ),
+                new AprilTag(
+                        3,
+                        new Pose3d(
+                        15.513558, 4.424426, 0.462788, new Rotation3d(0, 0, Math.PI))
+                        ),
+                new AprilTag(
+                        4,
+                        new Pose3d(
+                        16.178784, 6.749796, 0.695452, new Rotation3d(0, 0, Math.PI))
+                        ),
+                new AprilTag(
+                        5,
+                        new Pose3d(
+                        0.36195, 6.749796, 0.695452, new Rotation3d(0, 0, 0))
+                        ),
+                new AprilTag(
+                        6,
+                        new Pose3d(
+                        1.02743, 4.424426, 0.462788, new Rotation3d(0, 0, 0))
+                        ),
+                new AprilTag(
+                        7,
+                        new Pose3d(
+                        1.02743, 2.748026, 0.462788, new Rotation3d(0, 0, 0))
+                        ),
+                new AprilTag(
+                        8,
+                        new Pose3d(
+                        1.02743, 1.071626, 0.462788, new Rotation3d(0, 0, 0))
+                        )
+
+
+
+
+            ),
+            16.54175,
+            8.0137
+        );
     }
 }
