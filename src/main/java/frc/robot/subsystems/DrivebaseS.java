@@ -55,7 +55,6 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
 
     public final PIDController m_xController = new PIDController(3.0, 0, 0);
     public final PIDController m_yController = new PIDController(3.0, 0, 0);
-    @Log
     public final PIDController m_thetaController = new PIDController(3, 0, 0.1);
     public final PPHolonomicDriveController m_holonomicDriveController = new PPHolonomicDriveController(m_xController, m_yController, m_thetaController);
 
@@ -288,7 +287,6 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         return m_navx.getRotation2d();
     }
 
-    @Log(methodName = "getRadians")
     /**
      * Gets the current heading based on odometry. (this value will reflect odometry resets)
      * @return the current odometry heading.

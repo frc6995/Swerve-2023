@@ -41,14 +41,12 @@ public class SwerveModule extends SubsystemBase implements Loggable{
 
     private final DutyCycleEncoder m_magEncoder;
     private final DutyCycleEncoderSim m_magEncoderSim;
-    @Log
     private final double m_magEncoderOffset;
 
     //absolute offset for the CANCoder so that the wheels can be aligned when the robot is turned on
 
     private final ProfiledPIDController m_steerPIDController;
     // logging position error because it's actually the "process variable", vs its derivative
-    @Log(methodName="getPositionError", name="speedError")
     private final PIDController m_drivePIDController;
     private final String m_loggingName;
     private final SimpleMotorFeedforward m_driveFeedForward = new SimpleMotorFeedforward(
@@ -189,12 +187,10 @@ public class SwerveModule extends SubsystemBase implements Loggable{
         return m_driveEncoderWrapper.getVelocity();
     }
 
-    @Log
     public double getAppliedDriveVoltage() {
         return m_driveMotor.getAppliedOutput();
     }
 
-    @Log
     public double getAppliedRotationVoltage() {
         return m_steerMotor.getAppliedOutput();
     }

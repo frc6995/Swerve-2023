@@ -34,7 +34,6 @@ public class RobotContainer {
      */
 
     private final CommandXboxController m_driverController = new CommandXboxController(InputDevices.GAMEPAD_PORT);
-    @Log
     private final DrivebaseS m_drivebaseS = new DrivebaseS();
 
     @Log
