@@ -46,7 +46,7 @@ public class RobotContainer {
     SendableChooser<Command> m_autoSelector = new SendableChooser<Command>();
 
     public RobotContainer() {
-        m_target.setPose(new Pose2d(0, 0, new Rotation2d()));
+        m_target.setPose(new Pose2d(1.809, 1.072, Rotation2d.fromRadians(Math.PI)));
         
         
         m_drivebaseS.setDefaultCommand(
@@ -59,14 +59,9 @@ public class RobotContainer {
         );
 
         configureButtonBindings();
-        m_autoSelector.setDefaultOption("pathPlanner",
-        Commands.sequence(
-            m_drivebaseS.driveTime(1, 2),
-            m_drivebaseS.turnToHeading(Rotation2d.fromDegrees(180))
-        ));
-        PathPlannerTrajectory sCurveTrajectory = PathPlanner.loadPath("New Path", 4, 1, false);
-        m_field.getObject("scurve").setTrajectory((Trajectory) sCurveTrajectory);
-        m_autoSelector.addOption("sCurve",
+        PathPlannerTrajectory sCurveTrajectory = PathPlanner.loadPath("StraightBack", 4, 4, false);
+        m_field.getObject("traj").setTrajectory((Trajectory) sCurveTrajectory);
+        m_autoSelector.setDefaultOption("sCurve",
             m_drivebaseS.pathPlannerCommand(
                 sCurveTrajectory
             ).beforeStarting(
@@ -94,6 +89,12 @@ public class RobotContainer {
     }
 
     public void periodic() {
+        m_field.getObject("trajTarget").setPose(new Pose2d(
+            m_drivebaseS.m_xController.getSetpoint(),
+            m_drivebaseS.m_yController.getSetpoint(),
+            Rotation2d.fromRadians(
+            m_drivebaseS.m_thetaController.getSetpoint())
+        ));
         m_drivebaseS.drawRobotOnField(m_field);
         m_field3d.setRobotPose(new Pose3d(m_drivebaseS.getPose()));
     }

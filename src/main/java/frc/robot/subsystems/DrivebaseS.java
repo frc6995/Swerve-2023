@@ -27,7 +27,9 @@ import edu.wpi.first.math.system.plant.DCMotor;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
+import edu.wpi.first.wpilibj.Timer;
 import edu.wpi.first.wpilibj.SPI.Port;
+import edu.wpi.first.wpilibj.shuffleboard.Shuffleboard;
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj2.command.Command;
 import edu.wpi.first.wpilibj2.command.SubsystemBase;
@@ -39,7 +41,7 @@ import frc.robot.util.sim.SimGyroSensorModel;
 import frc.robot.util.sim.wpiClasses.QuadSwerveSim;
 import frc.robot.util.sim.wpiClasses.SwerveModuleSim;
 import frc.robot.util.trajectory.PPChasePoseCommand;
-import frc.robot.util.trajectory.PPSwerveControllerCommand;
+import com.pathplanner.lib.commands.PPSwerveControllerCommand;
 import io.github.oblarg.oblog.Loggable;
 import io.github.oblarg.oblog.annotations.Log;
 
@@ -49,13 +51,12 @@ import io.github.oblarg.oblog.annotations.Log;
  * Handles all the odometry and base movement for the chassis
  */
 public class DrivebaseS extends SubsystemBase implements Loggable {
-
     private final AHRS m_navx = new AHRS(Port.kMXP);
     private SimGyroSensorModel m_simNavx = new SimGyroSensorModel();
 
-    public final PIDController m_xController = new PIDController(3.0, 0, 0);
-    public final PIDController m_yController = new PIDController(3.0, 0, 0);
-    public final PIDController m_thetaController = new PIDController(3, 0, 0.1);
+    public final PIDController m_xController = new PIDController(10.0, 0, 0);
+    public final PIDController m_yController = new PIDController(10.0, 0, 0);
+    public final PIDController m_thetaController = new PIDController(5, 0, 0);
     public final PPHolonomicDriveController m_holonomicDriveController = new PPHolonomicDriveController(m_xController, m_yController, m_thetaController);
 
     private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
@@ -103,7 +104,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         new SwerveDrivePoseEstimator(m_kinematics, getHeading(), getModulePositions(), new Pose2d());
         
         m_cameraWrapper = new PhotonCameraWrapper("OV9281", VisionConstants.robotToCam);
-        resetPose(new Pose2d(1, 0, new Rotation2d()));
+        resetPose(new Pose2d(1.809, 1.072, Rotation2d.fromRadians(Math.PI)));
     }
 
     @Override
@@ -443,23 +444,16 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         });
     }
 
-    public Command pathPlannerCommand(Supplier<PathPlannerTrajectory> path) {
-        PPSwerveControllerCommand command = new PPSwerveControllerCommand(
-            path,
-            this::getPose,
-            m_holonomicDriveController,
-            this::drive,
-            this
-        );
-        return command;
-    }
-
     public Command pathPlannerCommand(PathPlannerTrajectory path) {
         PPSwerveControllerCommand command = new PPSwerveControllerCommand(
             path,
             this::getPose,
-            m_holonomicDriveController,
+            m_xController,
+            m_yController,
+            m_thetaController,
+            
             this::drive,
+            false,
             this
         );
         return command;
