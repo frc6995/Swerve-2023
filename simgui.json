@@ -23,7 +23,9 @@
       "/Shuffleboard/RobotContainer/m_autoSelector": "String Chooser",
       "/Shuffleboard/RobotContainer/m_drivebaseS": "Subsystem",
       "/Shuffleboard/RobotContainer/m_field": "Field2d",
-      "/SmartDashboard/PIDController[9]": "PIDController"
+      "/SmartDashboard/PIDController[9]": "PIDController",
+      "/SmartDashboard/PPSwerveControllerCommand_field": "Field2d",
+      "/SmartDashboard/SendableChooser[0]": "String Chooser"
     },
     "windows": {
       "/Shuffleboard/RobotContainer/field": {
@@ -94,7 +96,15 @@
           "width": 1.5
         },
         "top": 36,
-        "width": 16.541748046875
+        "width": 16.541748046875,
+        "window": {
+          "visible": true
+        }
+      },
+      "/Shuffleboard/RobotContainer/m_autoSelector": {
+        "window": {
+          "visible": true
+        }
       },
       "/Shuffleboard/RobotContainer/m_field": {
         "backLeft": {
@@ -114,6 +124,7 @@
         "image": "C:\\Users\\jashu\\PathWeaver\\Games\\2023 Charged Up\\2023-field.png",
         "left": 46,
         "modules": {
+          "arrows": false,
           "color": [
             0.8818565607070923,
             0.15627840161323547,
@@ -121,10 +132,29 @@
             255.0
           ],
           "length": 0.4000000059604645,
+          "style": "Hidden",
           "width": 0.4000000059604645
         },
         "right": 1088,
+        "scurve": {
+          "arrows": false,
+          "style": "Line"
+        },
+        "target": {
+          "arrows": false,
+          "length": 2.0,
+          "style": "Hidden",
+          "width": 2.0
+        },
         "top": 36,
+        "traj": {
+          "arrows": false,
+          "style": "Line"
+        },
+        "trajTarget": {
+          "length": 2.0,
+          "width": 2.0
+        },
         "width": 16.541748046875,
         "window": {
           "visible": true
@@ -133,6 +163,20 @@
     }
   },
   "NetworkTables": {
+    "Persistent Values": {
+      "open": false
+    },
+    "Retained Values": {
+      "open": false
+    },
+    "retained": {
+      "Shuffleboard": {
+        "RobotContainer": {
+          "open": true
+        },
+        "open": true
+      }
+    },
     "transitory": {
       "LiveWindow": {
         ".status": {
@@ -144,9 +188,6 @@
           "open": true
         },
         "DrivebaseS": {
-          "SwerveModule-FR-[12,11]": {
-            "open": true
-          },
           "SwerveModule-RL-[16,15]": {
             "open": true
           },
@@ -174,6 +215,9 @@
       },
       "SmartDashboard": {
         "PIDController[9]": {
+          "open": true
+        },
+        "SendableChooser[0]": {
           "open": true
         },
         "open": true,

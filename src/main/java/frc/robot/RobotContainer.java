@@ -2,9 +2,13 @@ package frc.robot;
 
 import static edu.wpi.first.wpilibj2.command.Commands.runOnce;
 
+import com.pathplanner.lib.PathPlanner;
+import com.pathplanner.lib.PathPlannerTrajectory;
+
 import edu.wpi.first.math.geometry.Pose2d;
 import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
+import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
 import edu.wpi.first.wpilibj.RobotController;
 
@@ -12,7 +16,9 @@ import edu.wpi.first.wpilibj.smartdashboard.Field2d;
 import edu.wpi.first.wpilibj.smartdashboard.Field3d;
 import edu.wpi.first.wpilibj.smartdashboard.FieldObject2d;
 import edu.wpi.first.wpilibj.smartdashboard.SendableChooser;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.Command;
+import edu.wpi.first.wpilibj2.command.Commands;
 import edu.wpi.first.wpilibj2.command.InstantCommand;
 import edu.wpi.first.wpilibj2.command.button.CommandXboxController;
 import edu.wpi.first.wpilibj2.command.button.Trigger;
@@ -28,7 +34,6 @@ public class RobotContainer {
      */
 
     private final CommandXboxController m_driverController = new CommandXboxController(InputDevices.GAMEPAD_PORT);
-    @Log
     private final DrivebaseS m_drivebaseS = new DrivebaseS();
 
     @Log
@@ -41,7 +46,7 @@ public class RobotContainer {
     SendableChooser<Command> m_autoSelector = new SendableChooser<Command>();
 
     public RobotContainer() {
-        m_target.setPose(new Pose2d(0, 0, new Rotation2d()));
+        m_target.setPose(new Pose2d(1.809, 1.072, Rotation2d.fromRadians(Math.PI)));
         
         
         m_drivebaseS.setDefaultCommand(
@@ -54,7 +59,18 @@ public class RobotContainer {
         );
 
         configureButtonBindings();
-        m_autoSelector.setDefaultOption("pathPlanner", new InstantCommand());
+        PathPlannerTrajectory sCurveTrajectory = PathPlanner.loadPath("StraightBack", 4, 4, false);
+        m_field.getObject("traj").setTrajectory((Trajectory) sCurveTrajectory);
+        m_autoSelector.setDefaultOption("sCurve",
+            m_drivebaseS.pathPlannerCommand(
+                sCurveTrajectory
+            ).beforeStarting(
+                m_drivebaseS.runOnce(
+                    ()->m_drivebaseS.resetPose(sCurveTrajectory.getInitialHolonomicPose())
+                )
+            )
+        );
+        SmartDashboard.putData(m_autoSelector);
     }
 
     public void configureButtonBindings() {
@@ -73,6 +89,12 @@ public class RobotContainer {
     }
 
     public void periodic() {
+        m_field.getObject("trajTarget").setPose(new Pose2d(
+            m_drivebaseS.m_xController.getSetpoint(),
+            m_drivebaseS.m_yController.getSetpoint(),
+            Rotation2d.fromRadians(
+            m_drivebaseS.m_thetaController.getSetpoint())
+        ));
         m_drivebaseS.drawRobotOnField(m_field);
         m_field3d.setRobotPose(new Pose3d(m_drivebaseS.getPose()));
     }
