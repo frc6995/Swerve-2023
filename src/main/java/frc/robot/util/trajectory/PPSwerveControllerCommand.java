@@ -1,148 +1,284 @@
 package frc.robot.util.trajectory;
 
+import com.pathplanner.lib.PathPlannerTrajectory;
+import com.pathplanner.lib.PathPlannerTrajectory.PathPlannerState;
+
+import frc.robot.util.trajectory.PPHolonomicDriveController;
+import com.pathplanner.lib.server.PathPlannerServer;
+import edu.wpi.first.math.controller.PIDController;
+import edu.wpi.first.math.geometry.Pose2d;
+import edu.wpi.first.math.kinematics.ChassisSpeeds;
+import edu.wpi.first.math.kinematics.SwerveDriveKinematics;
+import edu.wpi.first.math.kinematics.SwerveModuleState;
+import edu.wpi.first.wpilibj.DriverStation;
+import edu.wpi.first.wpilibj.Timer;
+import edu.wpi.first.wpilibj.smartdashboard.Field2d;
+import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
+import edu.wpi.first.wpilibj2.command.*;
+import frc.robot.util.drive.SecondOrderChassisSpeeds;
+import frc.robot.util.drive.SecondOrderSwerveDriveKinematics;
+import frc.robot.util.drive.SecondOrderSwerveModuleState;
+
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
-import com.pathplanner.lib.PathPlannerTrajectory;
-import com.pathplanner.lib.PathPlannerTrajectory.PathPlannerState;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-
-import edu.wpi.first.math.controller.PIDController;
-import edu.wpi.first.math.controller.ProfiledPIDController;
-import edu.wpi.first.math.geometry.Pose2d;
-import edu.wpi.first.math.kinematics.ChassisSpeeds;
-import edu.wpi.first.math.kinematics.SwerveModuleState;
-import edu.wpi.first.wpilibj.Timer;
-import edu.wpi.first.wpilibj2.command.CommandBase;
-import edu.wpi.first.wpilibj2.command.Subsystem;
-
-/**
- * A command that uses two PID controllers ({@link PIDController}) and a
- * ProfiledPIDController
- * ({@link ProfiledPIDController}) to follow a trajectory {@link PathPlannerTrajectory}
- * with a swerve drive.
- *
- * <p>
- * This command outputs the raw desired Swerve Module States
- * ({@link SwerveModuleState}) in an
- * array. The desired wheel and module rotation velocities should be taken from
- * those and used in
- * velocity PIDs.
- *
- * <p>
- * The robot angle controller does not follow the angle given by the trajectory
- * but rather goes
- * to the angle given in the final state of the trajectory.
- *
- * <p>
- * This class is provided by the NewCommands VendorDep
- */
-@SuppressWarnings("MemberName")
+/** Custom PathPlanner version of SwerveControllerCommand */
 public class PPSwerveControllerCommand extends CommandBase {
-    private final Timer m_timer = new Timer();
-    private Supplier<PathPlannerTrajectory> m_trajectorySupplier;
-    private PathPlannerTrajectory m_trajectory;
-    private final Supplier<Pose2d> m_pose;
-    private final PPHolonomicDriveController m_controller;
-    private final Consumer<ChassisSpeeds> m_outputChassisSpeedsRobotRelative;
-    private boolean safeToSample = true;
+  private final Timer timer = new Timer();
+  private final PathPlannerTrajectory trajectory;
+  private final Supplier<Pose2d> poseSupplier;
+  private final SecondOrderSwerveDriveKinematics kinematics;
+  private final PPHolonomicDriveController controller;
+  private final Consumer<SecondOrderSwerveModuleState[]> outputModuleStates;
+  private final Consumer<SecondOrderChassisSpeeds> outputChassisSpeeds;
+  private final boolean useKinematics;
+  private final boolean useAllianceColor;
+  private final Field2d field = new Field2d();
 
-    /**
-     * Constructs a new PPSwerveControllerCommand that when executed will follow the
-     * provided
-     * trajectory. This command will not return output voltages but rather raw
-     * module states from the
-     * position controllers which need to be put into a velocity PID.
-     *
-     * <p>
-     * Note: The controllers will *not* set the outputVolts to zero upon completion
-     * of the path-
-     * this is left to the user, since it is not appropriate for paths with
-     * nonstationary endstates.
-     *
-     * @param trajectory         The trajectory to follow.
-     * @param pose               A function that supplies the robot pose - use one
-     *                           of the odometry classes to
-     *                           provide this.
-     * @param kinematics         The kinematics for the robot drivetrain.
-     * @param xController        The Trajectory Tracker PID controller for the
-     *                           robot's x position.
-     * @param yController        The Trajectory Tracker PID controller for the
-     *                           robot's y position.
-     * @param thetaController    The Trajectory Tracker PID controller for angle for
-     *                           the robot.
-     * @param outputModuleStates The raw output module states from the position
-     *                           controllers.
-     * @param requirements       The subsystems to require.
-     */
-    @SuppressWarnings("ParameterName")
-    public PPSwerveControllerCommand(
-            PathPlannerTrajectory trajectory,
-            Supplier<Pose2d> pose,
-            PPHolonomicDriveController driveController,
-            Consumer<ChassisSpeeds> outputChassisSpeedsFieldRelative,
-            Subsystem... requirements) {
-                this(()->trajectory, pose, driveController, outputChassisSpeedsFieldRelative, requirements);
-        
+  /**
+   * Constructs a new PPSwerveControllerCommand that when executed will follow the provided
+   * trajectory. This command will not return output voltages but ChassisSpeeds from the position
+   * controllers which need to be converted to module states and put into a velocity PID.
+   *
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path this is
+   * left to the user, since it is not appropriate for paths with nonstationary endstates.
+   *
+   * @param trajectory The trajectory to follow.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param xController The Trajectory Tracker PID controller for the robot's x position.
+   * @param yController The Trajectory Tracker PID controller for the robot's y position.
+   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+   * @param outputChassisSpeeds The field relative chassis speeds output consumer.
+   * @param useAllianceColor Should the path states be automatically transformed based on alliance
+   *     color? In order for this to work properly, you MUST create your path on the blue side of
+   *     the field.
+   * @param requirements The subsystems to require.
+   */
+  public PPSwerveControllerCommand(
+      PathPlannerTrajectory trajectory,
+      Supplier<Pose2d> poseSupplier,
+      PIDController xController,
+      PIDController yController,
+      PIDController rotationController,
+      Consumer<SecondOrderChassisSpeeds> outputChassisSpeeds,
+      boolean useAllianceColor,
+      Subsystem... requirements) {
+    this.trajectory = trajectory;
+    this.poseSupplier = poseSupplier;
+    this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
+    this.outputChassisSpeeds = outputChassisSpeeds;
+    this.outputModuleStates = null;
+    this.kinematics = null;
+    this.useKinematics = false;
+    this.useAllianceColor = useAllianceColor;
+
+    addRequirements(requirements);
+
+    if (useAllianceColor && trajectory.fromGUI && trajectory.getInitialPose().getX() > 8.27) {
+      DriverStation.reportWarning(
+          "You have constructed a path following command that will automatically transform path states depending"
+              + " on the alliance color, however, it appears this path was created on the red side of the field"
+              + " instead of the blue side. This is likely an error.",
+          false);
+    }
+  }
+
+  /**
+   * Constructs a new PPSwerveControllerCommand that when executed will follow the provided
+   * trajectory. This command will not return output voltages but ChassisSpeeds from the position
+   * controllers which need to be converted to module states and put into a velocity PID.
+   *
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path this is
+   * left to the user, since it is not appropriate for paths with nonstationary endstates.
+   *
+   * @param trajectory The trajectory to follow.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param xController The Trajectory Tracker PID controller for the robot's x position.
+   * @param yController The Trajectory Tracker PID controller for the robot's y position.
+   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+   * @param outputChassisSpeeds The field relative chassis speeds output consumer.
+   * @param requirements The subsystems to require.
+   */
+  public PPSwerveControllerCommand(
+      PathPlannerTrajectory trajectory,
+      Supplier<Pose2d> poseSupplier,
+      PIDController xController,
+      PIDController yController,
+      PIDController rotationController,
+      Consumer<SecondOrderChassisSpeeds> outputChassisSpeeds,
+      Subsystem... requirements) {
+    this(
+        trajectory,
+        poseSupplier,
+        xController,
+        yController,
+        rotationController,
+        outputChassisSpeeds,
+        true,
+        requirements);
+  }
+
+  /**
+   * Constructs a new PPSwerveControllerCommand that when executed will follow the provided
+   * trajectory. This command will not return output voltages but rather raw module states from the
+   * position controllers which need to be put into a velocity PID.
+   *
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path- this is
+   * left to the user, since it is not appropriate for paths with nonstationary endstates.
+   *
+   * @param trajectory The trajectory to follow.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param kinematics The kinematics for the robot drivetrain.
+   * @param xController The Trajectory Tracker PID controller for the robot's x position.
+   * @param yController The Trajectory Tracker PID controller for the robot's y position.
+   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+   * @param outputModuleStates The raw output module states from the position controllers.
+   * @param useAllianceColor Should the path states be automatically transformed based on alliance
+   *     color? In order for this to work properly, you MUST create your path on the blue side of
+   *     the field.
+   * @param requirements The subsystems to require.
+   */
+  public PPSwerveControllerCommand(
+      PathPlannerTrajectory trajectory,
+      Supplier<Pose2d> poseSupplier,
+      SecondOrderSwerveDriveKinematics kinematics,
+      PIDController xController,
+      PIDController yController,
+      PIDController rotationController,
+      Consumer<SecondOrderSwerveModuleState[]> outputModuleStates,
+      boolean useAllianceColor,
+      Subsystem... requirements) {
+    this.trajectory = trajectory;
+    this.poseSupplier = poseSupplier;
+    this.kinematics = kinematics;
+    this.controller = new PPHolonomicDriveController(xController, yController, rotationController);
+    this.outputModuleStates = outputModuleStates;
+    this.outputChassisSpeeds = null;
+    this.useKinematics = true;
+    this.useAllianceColor = useAllianceColor;
+
+    addRequirements(requirements);
+
+    if (useAllianceColor && trajectory.fromGUI && trajectory.getInitialPose().getX() > 8.27) {
+      DriverStation.reportWarning(
+          "You have constructed a path following command that will automatically transform path states depending"
+              + " on the alliance color, however, it appears this path was created on the red side of the field"
+              + " instead of the blue side. This is likely an error.",
+          false);
+    }
+  }
+
+  /**
+   * Constructs a new PPSwerveControllerCommand that when executed will follow the provided
+   * trajectory. This command will not return output voltages but rather raw module states from the
+   * position controllers which need to be put into a velocity PID.
+   *
+   * <p>Note: The controllers will *not* set the output to zero upon completion of the path- this is
+   * left to the user, since it is not appropriate for paths with nonstationary endstates.
+   *
+   * @param trajectory The trajectory to follow.
+   * @param poseSupplier A function that supplies the robot pose - use one of the odometry classes
+   *     to provide this.
+   * @param kinematics The kinematics for the robot drivetrain.
+   * @param xController The Trajectory Tracker PID controller for the robot's x position.
+   * @param yController The Trajectory Tracker PID controller for the robot's y position.
+   * @param rotationController The Trajectory Tracker PID controller for angle for the robot.
+   * @param outputModuleStates The raw output module states from the position controllers.
+   * @param requirements The subsystems to require.
+   */
+  public PPSwerveControllerCommand(
+      PathPlannerTrajectory trajectory,
+      Supplier<Pose2d> poseSupplier,
+      SecondOrderSwerveDriveKinematics kinematics,
+      PIDController xController,
+      PIDController yController,
+      PIDController rotationController,
+      Consumer<SecondOrderSwerveModuleState[]> outputModuleStates,
+      Subsystem... requirements) {
+    this(
+        trajectory,
+        poseSupplier,
+        kinematics,
+        xController,
+        yController,
+        rotationController,
+        outputModuleStates,
+        true,
+        requirements);
+  }
+
+  @Override
+  public void initialize() {
+    SmartDashboard.putData("PPSwerveControllerCommand_field", this.field);
+    this.field.getObject("traj").setTrajectory(this.trajectory);
+
+    this.timer.reset();
+    this.timer.start();
+
+    PathPlannerServer.sendActivePath(this.trajectory.getStates());
+  }
+
+  @Override
+  public void execute() {
+    double currentTime = this.timer.get();
+    PathPlannerState desiredState = (PathPlannerState) this.trajectory.sample(currentTime);
+
+    if (useAllianceColor && trajectory.fromGUI) {
+      desiredState =
+          PathPlannerTrajectory.transformStateForAlliance(
+              desiredState, DriverStation.getAlliance());
     }
 
-    public PPSwerveControllerCommand(
-        Supplier<PathPlannerTrajectory> trajectory,
-        Supplier<Pose2d> pose,
-        PPHolonomicDriveController driveController,
-        Consumer<ChassisSpeeds> outputChassisSpeedsFieldRelative,
-        Subsystem... requirements) {
-            m_trajectorySupplier = trajectory;
-        m_pose = pose;
+    Pose2d currentPose = this.poseSupplier.get();
+    this.field.setRobotPose(currentPose);
+    PathPlannerServer.sendPathFollowingData(
+        new Pose2d(desiredState.poseMeters.getTranslation(), desiredState.holonomicRotation),
+        currentPose);
 
+    SmartDashboard.putNumber(
+        "PPSwerveControllerCommand_xError", currentPose.getX() - desiredState.poseMeters.getX());
+    SmartDashboard.putNumber(
+        "PPSwerveControllerCommand_yError", currentPose.getY() - desiredState.poseMeters.getY());
+    SmartDashboard.putNumber(
+        "PPSwerveControllerCommand_rotationError",
+        currentPose.getRotation().getRadians() - desiredState.holonomicRotation.getRadians());
 
-        m_controller = driveController;
+    SecondOrderChassisSpeeds targetChassisSpeeds = this.controller.calculate(currentPose, desiredState);
 
-        m_outputChassisSpeedsRobotRelative = outputChassisSpeedsFieldRelative;
+    var alpha = ( 
+    ((PathPlannerState) this.trajectory.sample(currentTime + 0.01)).holonomicAngularVelocityRadPerSec
+    - desiredState.holonomicAngularVelocityRadPerSec) / 0.01;
 
-        addRequirements(requirements);
-        }
+    targetChassisSpeeds.alphaRadiansPerSecondSq = alpha;
+    if (this.useKinematics) {
+      SecondOrderSwerveModuleState[] targetModuleStates =
+          this.kinematics.toSwerveModuleStates(targetChassisSpeeds);
 
-
-    @Override
-    public void initialize() {
-        m_timer.reset();
-        m_timer.start();
-        m_trajectory = m_trajectorySupplier.get();
-        if(m_trajectory.getStates().size() == 0) {
-            this.safeToSample = false;
-        }
-        else {
-            this.safeToSample = true;
-        }
+      this.outputModuleStates.accept(targetModuleStates);
+    } else {
+      this.outputChassisSpeeds.accept(targetChassisSpeeds);
     }
+  }
 
-    @Override
-    @SuppressWarnings("LocalVariableName")
-    public void execute() {
-        PathPlannerState desiredState;
-        if (safeToSample) {
-            double curTime = m_timer.get();
-            desiredState = (PathPlannerState) m_trajectory.sample(curTime);
-        }
-        else {
-            desiredState = new PathPlannerState();
-            desiredState.holonomicRotation = m_pose.get().getRotation();
-            desiredState.poseMeters = m_pose.get();
-            desiredState.holonomicAngularVelocityRadPerSec = 0;
-        }
-            // By passing in the desired state velocity and, we allow the controller to 
-            var targetChassisSpeeds = m_controller.calculate(m_pose.get(), desiredState);
-            m_outputChassisSpeedsRobotRelative.accept(targetChassisSpeeds);
-    }
+  @Override
+  public void end(boolean interrupted) {
+    this.timer.stop();
 
-    @Override
-    public void end(boolean interrupted) {
-        m_timer.stop();
+    if (interrupted) {
+      if (useKinematics) {
+        this.outputModuleStates.accept(
+            this.kinematics.toSwerveModuleStates(new SecondOrderChassisSpeeds()));
+      } else {
+        this.outputChassisSpeeds.accept(new SecondOrderChassisSpeeds());
+      }
     }
+  }
 
-    @Override
-    public boolean isFinished() {
-        return !safeToSample || m_timer.hasElapsed(m_trajectory.getTotalTimeSeconds());
-    }
+  @Override
+  public boolean isFinished() {
+    return this.timer.hasElapsed(this.trajectory.getTotalTimeSeconds());
+  }
 }

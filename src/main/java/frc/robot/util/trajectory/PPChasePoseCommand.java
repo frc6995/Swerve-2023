@@ -6,7 +6,9 @@ import java.util.function.Supplier;
 
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.PathPlannerTrajectory.PathPlannerState;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+
+import frc.robot.util.drive.SecondOrderChassisSpeeds;
+import frc.robot.util.trajectory.PPHolonomicDriveController;
 
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.controller.ProfiledPIDController;
@@ -48,7 +50,7 @@ public class PPChasePoseCommand extends CommandBase implements Loggable {
     private PathPlannerTrajectory m_trajectory;
     private final Supplier<Pose2d> m_pose;
     private final PPHolonomicDriveController m_controller;
-    private final Consumer<ChassisSpeeds> m_outputChassisSpeedsRobotRelative;
+    private final Consumer<SecondOrderChassisSpeeds> m_outputChassisSpeedsRobotRelative;
     private final Consumer<PathPlannerTrajectory> m_outputTrajectory;
     private final BiFunction<Pose2d, Pose2d, PathPlannerTrajectory> m_trajectoryGenerator;
     private Pose2d m_lastRegenTarget;
@@ -68,7 +70,7 @@ public class PPChasePoseCommand extends CommandBase implements Loggable {
         Supplier<Pose2d> targetPose,
         Supplier<Pose2d> pose,
         PPHolonomicDriveController driveController,
-        Consumer<ChassisSpeeds> outputChassisSpeedsFieldRelative,
+        Consumer<SecondOrderChassisSpeeds> outputChassisSpeedsFieldRelative,
         Consumer<PathPlannerTrajectory> trajectoryDebugOutput,
         BiFunction<Pose2d, Pose2d, PathPlannerTrajectory> trajectoryGenerator,
         DrivebaseS drive) {

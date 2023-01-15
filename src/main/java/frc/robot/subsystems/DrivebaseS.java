@@ -9,7 +9,7 @@ import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.PathPoint;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
+import frc.robot.util.trajectory.PPHolonomicDriveController;
 
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
@@ -37,6 +37,9 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.DriveConstants.ModuleConstants;
 import frc.robot.util.NomadMathUtil;
+import frc.robot.util.drive.SecondOrderChassisSpeeds;
+import frc.robot.util.drive.SecondOrderSwerveDriveKinematics;
+import frc.robot.util.drive.SecondOrderSwerveModuleState;
 import frc.robot.util.sim.SimGyroSensorModel;
 import frc.robot.util.sim.wpiClasses.QuadSwerveSim;
 import frc.robot.util.sim.wpiClasses.SwerveModuleSim;
@@ -59,7 +62,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     public final PIDController m_thetaController = new PIDController(5, 0, 0);
     public final PPHolonomicDriveController m_holonomicDriveController = new PPHolonomicDriveController(m_xController, m_yController, m_thetaController);
 
-    private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
+    private final SwerveDriveKinematics m_kinematics = new SecondOrderSwerveDriveKinematics(
         ModuleConstants.FL.centerOffset,
         ModuleConstants.FR.centerOffset,
         ModuleConstants.BL.centerOffset,
@@ -121,6 +124,10 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     }
     
     public void drive(ChassisSpeeds speeds) {
+        drive(new SecondOrderChassisSpeeds(speeds));
+    }
+
+    public void drive(SecondOrderChassisSpeeds speeds) {
         // use kinematics (wheel placements) to convert overall robot state to array of individual module states
         SwerveModuleState[] states;
 
@@ -133,13 +140,14 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         } else {
             // make sure the wheels don't try to spin faster than the maximum speed possible
             states = m_kinematics.toSwerveModuleStates(speeds);
-            SwerveDriveKinematics.desaturateWheelSpeeds(states, speeds,
-                MAX_FWD_REV_SPEED_MPS,
-                MAX_ROTATE_SPEED_RAD_PER_SEC,
-                MAX_MODULE_SPEED_FPS);
+            // SwerveDriveKinematics.desaturateWheelSpeeds(states, speeds,
+            //     MAX_FWD_REV_SPEED_MPS,
+            //     MAX_ROTATE_SPEED_RAD_PER_SEC,
+            //     MAX_MODULE_SPEED_FPS);
         } 
         setModuleStates(states);
     }
+
 
     public void driveFieldRelative(ChassisSpeeds fieldRelativeSpeeds) {
         drive(ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds, getPoseHeading()));
@@ -198,6 +206,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
             states[i] = new SwerveModuleState(
                 0,
                 new Rotation2d(MathUtil.angleModulus(m_modules.get(i).getCanEncoderAngle().getRadians())));
+                
         }
         return states;
     }
@@ -207,6 +216,12 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
      * Uses PID and feedforward control to control the linear and rotational values for the modules
      */
     public void setModuleStates(SwerveModuleState[] moduleStates) {
+        for (int i = 0; i < NUM_MODULES; i++) {
+            m_modules.get(i).setDesiredStateClosedLoop(moduleStates[i]);
+        }
+    }
+
+    public void setModuleStates(SecondOrderSwerveModuleState[] moduleStates) {
         for (int i = 0; i < NUM_MODULES; i++) {
             m_modules.get(i).setDesiredStateClosedLoop(moduleStates[i]);
         }

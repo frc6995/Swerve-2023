@@ -87,7 +87,7 @@ public class Constants {
         public static final double STEER_P = 2.5;
         public static final double STEER_D = 0.0;
     
-        public static final double DRIVE_P = 0.5;
+        public static final double DRIVE_P = 3;
         public static final double DRIVE_D = 0.0;
 
 
