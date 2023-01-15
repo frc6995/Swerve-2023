@@ -153,7 +153,9 @@
           "style": "Line"
         },
         "trajTarget": {
+          "arrows": false,
           "length": 2.0,
+          "style": "Hidden",
           "width": 2.0
         },
         "width": 16.541748046875,
@@ -189,6 +191,9 @@
           "open": true
         },
         "DrivebaseS": {
+          "SwerveModule-FL-[18,17]": {
+            "open": true
+          },
           "SwerveModule-FR-[12,11]": {
             "open": true
           },
@@ -240,7 +245,7 @@
               "autoFit": true
             }
           ],
-          "height": 400,
+          "height": 413,
           "series": [
             {
               "color": [
@@ -277,8 +282,18 @@
                 1.0
               ],
               "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getSteerSetpoint"
+            },
+            {
+              "color": [
+                0.5058823823928833,
+                0.44705885648727417,
+                0.7019608020782471,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FL-[18,17]/getSteerSetpoint"
             }
-          ]
+          ],
+          "viewTime": 6.1999945640563965
         },
         {
           "axis": [
@@ -286,17 +301,9 @@
               "autoFit": true
             }
           ],
-          "height": 400,
+          "height": 413,
+          "lockPrevX": true,
           "series": [
-            {
-              "color": [
-                0.2980392277240753,
-                0.44705885648727417,
-                0.6901960968971252,
-                1.0
-              ],
-              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getVelocitySetpoint"
-            },
             {
               "color": [
                 0.7686275243759155,
@@ -305,9 +312,18 @@
                 1.0
               ],
               "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getCurrentVelocityMetersPerSecond"
+            },
+            {
+              "color": [
+                0.2980392277240753,
+                0.44705885648727417,
+                0.6901960968971252,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getVelocitySetpoint"
             }
           ],
-          "viewTime": 2.699997901916504
+          "viewTime": 5.499995231628418
         }
       ]
     }

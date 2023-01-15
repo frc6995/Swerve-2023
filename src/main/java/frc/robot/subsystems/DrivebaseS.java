@@ -57,9 +57,9 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     private final AHRS m_navx = new AHRS(Port.kMXP);
     private SimGyroSensorModel m_simNavx = new SimGyroSensorModel();
 
-    public final PIDController m_xController = new PIDController(10.0, 0, 0);
-    public final PIDController m_yController = new PIDController(10.0, 0, 0);
-    public final PIDController m_thetaController = new PIDController(5, 0, 0);
+    public final PIDController m_xController = new PIDController(15.0, 0, 0);
+    public final PIDController m_yController = new PIDController(15.0, 0, 0);
+    public final PIDController m_thetaController = new PIDController(15, 0, 0);
     public final PPHolonomicDriveController m_holonomicDriveController = new PPHolonomicDriveController(m_xController, m_yController, m_thetaController);
 
     private final SwerveDriveKinematics m_kinematics = new SecondOrderSwerveDriveKinematics(

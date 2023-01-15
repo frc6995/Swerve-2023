@@ -59,7 +59,7 @@ public class RobotContainer {
         );
 
         configureButtonBindings();
-        PathPlannerTrajectory sCurveTrajectory = PathPlanner.loadPath("StraightBack", 2, 4, false);
+        PathPlannerTrajectory sCurveTrajectory = PathPlanner.loadPath("StraightBack", 3, 8, false);
         m_field.getObject("traj").setTrajectory((Trajectory) sCurveTrajectory);
         m_autoSelector.setDefaultOption("sCurve",
             m_drivebaseS.pathPlannerCommand(

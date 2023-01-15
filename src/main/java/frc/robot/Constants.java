@@ -82,12 +82,12 @@ public class Constants {
 
         //kv: (12 volts * 60 s/min * 1/5.14 WRevs/MRevs * wheel rad * 2pi  / (6000 MRPM *
         /** ks, kv, ka */ 
-        public static final double[] DRIVE_FF_CONST = {0.11452, 1.9844, 0.31123};
+        public static final double[] DRIVE_FF_CONST = {0.11452, 1.9844, 0.31123 * 1.2};
 
         public static final double STEER_P = 2.5;
         public static final double STEER_D = 0.0;
     
-        public static final double DRIVE_P = 3;
+        public static final double DRIVE_P = 9;
         public static final double DRIVE_D = 0.0;
 
 
