@@ -53,18 +53,18 @@
         "y": 0.9021142828610453
       },
       "prevControl": {
-        "x": 5.1414044708431295,
-        "y": 1.073401804923269
+        "x": 5.129566321181709,
+        "y": 0.9021142828610453
       },
       "nextControl": {
-        "x": 5.1414044708431295,
-        "y": 1.073401804923269
+        "x": 6.534542983615882,
+        "y": 0.9021142828610453
       },
       "holonomicAngle": 0,
-      "isReversal": true,
+      "isReversal": false,
       "velOverride": null,
       "isLocked": false,
-      "isStopPoint": false,
+      "isStopPoint": true,
       "stopEvent": {
         "names": [],
         "executionBehavior": "parallel",
