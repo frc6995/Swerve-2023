@@ -107,6 +107,12 @@
         }
       },
       "/Shuffleboard/RobotContainer/m_field": {
+        "Robot": {
+          "arrowSize": 17,
+          "arrowWeight": 2.0,
+          "length": 0.7799999713897705,
+          "width": 0.7799999713897705
+        },
         "backLeft": {
           "arrows": false,
           "style": "Hidden",
@@ -124,7 +130,6 @@
         "image": "C:\\Users\\jashu\\PathWeaver\\Games\\2023 Charged Up\\2023-field.png",
         "left": 46,
         "modules": {
-          "arrows": false,
           "color": [
             0.8818565607070923,
             0.15627840161323547,
@@ -133,7 +138,7 @@
           ],
           "length": 0.4000000059604645,
           "selectable": false,
-          "style": "Hidden",
+          "style": "Box/Image",
           "width": 0.4000000059604645
         },
         "right": 1088,
@@ -153,9 +158,15 @@
           "style": "Line"
         },
         "trajTarget": {
-          "arrows": false,
+          "arrowColor": [
+            103.29110717773438,
+            0.0,
+            255.0,
+            255.0
+          ],
+          "arrowSize": 8,
           "length": 2.0,
-          "style": "Hidden",
+          "style": "Box/Image",
           "width": 2.0
         },
         "width": 16.541748046875,
@@ -245,26 +256,8 @@
               "autoFit": true
             }
           ],
-          "height": 413,
+          "height": 165,
           "series": [
-            {
-              "color": [
-                0.2980392277240753,
-                0.44705885648727417,
-                0.6901960968971252,
-                1.0
-              ],
-              "id": "NT:/Shuffleboard/DrivebaseS/getPoseHeading"
-            },
-            {
-              "color": [
-                0.8666667342185974,
-                0.5176470875740051,
-                0.32156863808631897,
-                1.0
-              ],
-              "id": "NT:/Shuffleboard/DrivebaseS/getHeading"
-            },
             {
               "color": [
                 0.6078431606292725,
@@ -282,15 +275,6 @@
                 1.0
               ],
               "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FR-[12,11]/getSteerSetpoint"
-            },
-            {
-              "color": [
-                0.5058823823928833,
-                0.44705885648727417,
-                0.7019608020782471,
-                1.0
-              ],
-              "id": "NT:/Shuffleboard/DrivebaseS/SwerveModule-FL-[18,17]/getSteerSetpoint"
             }
           ],
           "viewTime": 6.1999945640563965
@@ -301,7 +285,7 @@
               "autoFit": true
             }
           ],
-          "height": 413,
+          "height": 165,
           "lockPrevX": true,
           "series": [
             {
@@ -324,6 +308,44 @@
             }
           ],
           "viewTime": 5.499995231628418
+        },
+        {
+          "axis": [
+            {
+              "autoFit": true
+            }
+          ],
+          "height": 165,
+          "lockPrevX": true,
+          "series": [
+            {
+              "color": [
+                0.2980392277240753,
+                0.44705885648727417,
+                0.6901960968971252,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/RobotContainer/m_lastLoopDuration"
+            }
+          ]
+        }
+      ]
+    },
+    "Plot <1>": {
+      "plots": [
+        {
+          "height": 332,
+          "series": [
+            {
+              "color": [
+                0.2980392277240753,
+                0.44705885648727417,
+                0.6901960968971252,
+                1.0
+              ],
+              "id": "NT:/Shuffleboard/RobotContainer/m_lastLoopDuration"
+            }
+          ]
         }
       ]
     }

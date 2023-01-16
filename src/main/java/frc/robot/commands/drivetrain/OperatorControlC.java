@@ -3,6 +3,7 @@ package frc.robot.commands.drivetrain;
 import java.util.function.DoubleSupplier;
 
 import edu.wpi.first.math.filter.SlewRateLimiter;
+import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.geometry.Translation2d;
 import edu.wpi.first.math.kinematics.ChassisSpeeds;
 import edu.wpi.first.math.util.Units;
@@ -10,6 +11,7 @@ import edu.wpi.first.wpilibj.smartdashboard.SmartDashboard;
 import edu.wpi.first.wpilibj2.command.CommandBase;
 import frc.robot.Constants.DriveConstants;
 import frc.robot.subsystems.DrivebaseS;
+import frc.robot.util.drive.SecondOrderChassisSpeeds;
 
 public class OperatorControlC extends CommandBase {
 
@@ -86,7 +88,13 @@ public class OperatorControlC extends CommandBase {
         rot = m_thetaRateLimiter.calculate(rot);
         rot *= MAX_TURN_SPEED;
 
-        m_drive.driveFieldRelative(new ChassisSpeeds(fwdX, fwdY, rot));
+        m_drive.drive(SecondOrderChassisSpeeds.fromFieldRelativeSpeeds(
+            new SecondOrderChassisSpeeds(
+                new ChassisSpeeds(fwdX, fwdY, rot)
+            ),
+            //Fudge factor here
+            m_drive.getPoseHeading().plus(Rotation2d.fromRadians(rot * 0.09))
+        ));
     }
 
     // method to deadband inputs to eliminate tiny unwanted values from the joysticks

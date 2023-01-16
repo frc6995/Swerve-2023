@@ -10,6 +10,7 @@ import edu.wpi.first.math.geometry.Pose3d;
 import edu.wpi.first.math.geometry.Rotation2d;
 import edu.wpi.first.math.trajectory.Trajectory;
 import edu.wpi.first.math.util.Units;
+import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.RobotController;
 
 import edu.wpi.first.wpilibj.smartdashboard.Field2d;
@@ -45,6 +46,10 @@ public class RobotContainer {
     @Log
     SendableChooser<Command> m_autoSelector = new SendableChooser<Command>();
 
+    @Log
+    private double m_lastLoopDuration;
+    private double m_lastLoopTimestampSeconds;
+
     public RobotContainer() {
         m_target.setPose(new Pose2d(1.809, 1.072, Rotation2d.fromRadians(Math.PI)));
         
@@ -59,7 +64,7 @@ public class RobotContainer {
         );
 
         configureButtonBindings();
-        PathPlannerTrajectory sCurveTrajectory = PathPlanner.loadPath("StraightBack", 3, 8, false);
+        PathPlannerTrajectory sCurveTrajectory = PathPlanner.loadPath("StraightBack", 4, 8, false);
         m_field.getObject("traj").setTrajectory((Trajectory) sCurveTrajectory);
         m_autoSelector.setDefaultOption("sCurve",
             m_drivebaseS.pathPlannerCommand(
@@ -89,6 +94,9 @@ public class RobotContainer {
     }
 
     public void periodic() {
+        /* Trace the loop duration and plot to shuffleboard */
+        m_lastLoopDuration = (WPIUtilJNI.now() / 1e6) - m_lastLoopTimestampSeconds;
+        m_lastLoopTimestampSeconds += m_lastLoopDuration;
         m_field.getObject("trajTarget").setPose(new Pose2d(
             m_drivebaseS.m_xController.getSetpoint(),
             m_drivebaseS.m_yController.getSetpoint(),
