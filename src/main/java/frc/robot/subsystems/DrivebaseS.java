@@ -9,8 +9,8 @@ import com.pathplanner.lib.PathConstraints;
 import com.pathplanner.lib.PathPlanner;
 import com.pathplanner.lib.PathPlannerTrajectory;
 import com.pathplanner.lib.PathPoint;
-import com.pathplanner.lib.controllers.PPHolonomicDriveController;
-
+import frc.robot.util.trajectory.PPHolonomicDriveController;
+import frc.robot.vision.PhotonCameraWrapper;
 import edu.wpi.first.math.MathUtil;
 import edu.wpi.first.math.controller.PIDController;
 import edu.wpi.first.math.estimator.SwerveDrivePoseEstimator;
@@ -24,6 +24,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -37,6 +38,9 @@ import frc.robot.Constants.DriveConstants;
 import frc.robot.Constants.VisionConstants;
 import frc.robot.Constants.DriveConstants.ModuleConstants;
 import frc.robot.util.NomadMathUtil;
+import frc.robot.util.drive.SecondOrderChassisSpeeds;
+import frc.robot.util.drive.SecondOrderSwerveDriveKinematics;
+import frc.robot.util.drive.SecondOrderSwerveModuleState;
 import frc.robot.util.sim.SimGyroSensorModel;
 import frc.robot.util.sim.wpiClasses.QuadSwerveSim;
 import frc.robot.util.sim.wpiClasses.SwerveModuleSim;
@@ -54,12 +58,12 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     private final AHRS m_navx = new AHRS(Port.kMXP);
     private SimGyroSensorModel m_simNavx = new SimGyroSensorModel();
 
-    public final PIDController m_xController = new PIDController(10.0, 0, 0);
-    public final PIDController m_yController = new PIDController(10.0, 0, 0);
-    public final PIDController m_thetaController = new PIDController(5, 0, 0);
+    public final PIDController m_xController = new PIDController(3, 0, 0);
+    public final PIDController m_yController = new PIDController(3, 0, 0);
+    public final PIDController m_thetaController = new PIDController(3, 0, 0);
     public final PPHolonomicDriveController m_holonomicDriveController = new PPHolonomicDriveController(m_xController, m_yController, m_thetaController);
 
-    private final SwerveDriveKinematics m_kinematics = new SwerveDriveKinematics(
+    private final SwerveDriveKinematics m_kinematics = new SecondOrderSwerveDriveKinematics(
         ModuleConstants.FL.centerOffset,
         ModuleConstants.FR.centerOffset,
         ModuleConstants.BL.centerOffset,
@@ -102,9 +106,11 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         
         m_poseEstimator =
         new SwerveDrivePoseEstimator(m_kinematics, getHeading(), getModulePositions(), new Pose2d());
-        
+        m_thetaController.setTolerance(Units.degreesToRadians(2));
+        m_xController.setTolerance(0.05);
+        m_yController.setTolerance(0.05);
         m_cameraWrapper = new PhotonCameraWrapper("OV9281", VisionConstants.robotToCam);
-        resetPose(new Pose2d(1.809, 1.072, Rotation2d.fromRadians(Math.PI)));
+        resetPose(new Pose2d(1.835, 1.072, Rotation2d.fromRadians(Math.PI)));
     }
 
     @Override
@@ -121,6 +127,10 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     }
     
     public void drive(ChassisSpeeds speeds) {
+        drive(new SecondOrderChassisSpeeds(speeds));
+    }
+
+    public void drive(SecondOrderChassisSpeeds speeds) {
         // use kinematics (wheel placements) to convert overall robot state to array of individual module states
         SwerveModuleState[] states;
 
@@ -133,13 +143,14 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         } else {
             // make sure the wheels don't try to spin faster than the maximum speed possible
             states = m_kinematics.toSwerveModuleStates(speeds);
-            SwerveDriveKinematics.desaturateWheelSpeeds(states, speeds,
-                MAX_FWD_REV_SPEED_MPS,
-                MAX_ROTATE_SPEED_RAD_PER_SEC,
-                MAX_MODULE_SPEED_FPS);
+            // SwerveDriveKinematics.desaturateWheelSpeeds(states, speeds,
+            //     MAX_FWD_REV_SPEED_MPS,
+            //     MAX_ROTATE_SPEED_RAD_PER_SEC,
+            //     MAX_MODULE_SPEED_FPS);
         } 
         setModuleStates(states);
     }
+
 
     public void driveFieldRelative(ChassisSpeeds fieldRelativeSpeeds) {
         drive(ChassisSpeeds.fromFieldRelativeSpeeds(fieldRelativeSpeeds, getPoseHeading()));
@@ -198,6 +209,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
             states[i] = new SwerveModuleState(
                 0,
                 new Rotation2d(MathUtil.angleModulus(m_modules.get(i).getCanEncoderAngle().getRadians())));
+                
         }
         return states;
     }
@@ -207,6 +219,12 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
      * Uses PID and feedforward control to control the linear and rotational values for the modules
      */
     public void setModuleStates(SwerveModuleState[] moduleStates) {
+        for (int i = 0; i < NUM_MODULES; i++) {
+            m_modules.get(i).setDesiredStateClosedLoop(moduleStates[i]);
+        }
+    }
+
+    public void setModuleStates(SecondOrderSwerveModuleState[] moduleStates) {
         for (int i = 0; i < NUM_MODULES; i++) {
             m_modules.get(i).setDesiredStateClosedLoop(moduleStates[i]);
         }
@@ -490,7 +508,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
                     robotToTargetTranslation.getNorm() > 0.1
                 ) {
                     PathPlannerTrajectory pathPlannerTrajectory = PathPlanner.generatePath(
-                        new PathConstraints(4, 4), 
+                        new PathConstraints(2, 2), 
                         //Start point. At the position of the robot, initial travel direction toward the target,
                         // robot rotation as the holonomic rotation, and putting in the (possibly 0) velocity override.
                         new PathPoint(
