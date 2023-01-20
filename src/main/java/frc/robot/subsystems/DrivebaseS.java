@@ -107,7 +107,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         new SwerveDrivePoseEstimator(m_kinematics, getHeading(), getModulePositions(), new Pose2d());
         
         m_cameraWrapper = new PhotonCameraWrapper("OV9281", VisionConstants.robotToCam);
-        resetPose(new Pose2d(1.809, 1.072, Rotation2d.fromRadians(Math.PI)));
+        resetPose(new Pose2d(0, 0, Rotation2d.fromRadians(0)));
     }
 
     @Override
