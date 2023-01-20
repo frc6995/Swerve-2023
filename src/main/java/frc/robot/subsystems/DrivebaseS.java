@@ -24,6 +24,7 @@ import edu.wpi.first.math.kinematics.SwerveDriveOdometry;
 import edu.wpi.first.math.kinematics.SwerveModulePosition;
 import edu.wpi.first.math.kinematics.SwerveModuleState;
 import edu.wpi.first.math.system.plant.DCMotor;
+import edu.wpi.first.math.util.Units;
 import edu.wpi.first.util.WPIUtilJNI;
 import edu.wpi.first.wpilibj.DriverStation;
 import edu.wpi.first.wpilibj.RobotBase;
@@ -57,9 +58,9 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
     private final AHRS m_navx = new AHRS(Port.kMXP);
     private SimGyroSensorModel m_simNavx = new SimGyroSensorModel();
 
-    public final PIDController m_xController = new PIDController(15.0, 0, 0);
-    public final PIDController m_yController = new PIDController(15.0, 0, 0);
-    public final PIDController m_thetaController = new PIDController(15, 0, 0);
+    public final PIDController m_xController = new PIDController(3, 0, 0);
+    public final PIDController m_yController = new PIDController(3, 0, 0);
+    public final PIDController m_thetaController = new PIDController(3, 0, 0);
     public final PPHolonomicDriveController m_holonomicDriveController = new PPHolonomicDriveController(m_xController, m_yController, m_thetaController);
 
     private final SwerveDriveKinematics m_kinematics = new SecondOrderSwerveDriveKinematics(
@@ -105,9 +106,11 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
         
         m_poseEstimator =
         new SwerveDrivePoseEstimator(m_kinematics, getHeading(), getModulePositions(), new Pose2d());
-        
+        m_thetaController.setTolerance(Units.degreesToRadians(2));
+        m_xController.setTolerance(0.05);
+        m_yController.setTolerance(0.05);
         m_cameraWrapper = new PhotonCameraWrapper("OV9281", VisionConstants.robotToCam);
-        resetPose(new Pose2d(0, 0, Rotation2d.fromRadians(0)));
+        resetPose(new Pose2d(1.835, 1.072, Rotation2d.fromRadians(Math.PI)));
     }
 
     @Override
@@ -505,7 +508,7 @@ public class DrivebaseS extends SubsystemBase implements Loggable {
                     robotToTargetTranslation.getNorm() > 0.1
                 ) {
                     PathPlannerTrajectory pathPlannerTrajectory = PathPlanner.generatePath(
-                        new PathConstraints(4, 4), 
+                        new PathConstraints(2, 2), 
                         //Start point. At the position of the robot, initial travel direction toward the target,
                         // robot rotation as the holonomic rotation, and putting in the (possibly 0) velocity override.
                         new PathPoint(

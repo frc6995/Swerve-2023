@@ -110,11 +110,19 @@ public class PPChasePoseCommand extends CommandBase implements Loggable {
         }
         
         PathPlannerState desiredState;
+        SecondOrderChassisSpeeds targetChassisSpeeds;
         // Make sure the trajectory is not empty
         // Make sure it's still time to be following the trajectory.
         if (m_trajectory.getStates().size() != 0 && m_timer.get() < m_trajectory.getTotalTimeSeconds()) {
             double curTime = m_timer.get();
             desiredState = (PathPlannerState) m_trajectory.sample(curTime);
+            targetChassisSpeeds = m_controller.calculate(m_pose.get(), desiredState);
+
+            var alpha = ( 
+            ((PathPlannerState) m_trajectory.sample(curTime + 0.01)).holonomicAngularVelocityRadPerSec
+            - desiredState.holonomicAngularVelocityRadPerSec) / 0.01;
+
+            targetChassisSpeeds.alphaRadiansPerSecondSq = alpha;
         }
         // if the trajectory is empty, or the time is up, just use the holonomic drive controller to hold the pose.
         else {
@@ -122,9 +130,11 @@ public class PPChasePoseCommand extends CommandBase implements Loggable {
             desiredState.holonomicRotation = m_targetPose.get().getRotation();
             desiredState.poseMeters = m_targetPose.get();
             desiredState.holonomicAngularVelocityRadPerSec = 0;
+            targetChassisSpeeds = m_controller.calculate(m_pose.get(), desiredState);
         }
             // By passing in the desired state velocity and, we allow the controller to 
-            var targetChassisSpeeds = m_controller.calculate(m_pose.get(), desiredState);
+            
+    
             m_outputChassisSpeedsRobotRelative.accept(targetChassisSpeeds);
     }
 
